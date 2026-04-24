@@ -1,0 +1,28 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+
+# Node
+**/node_modules/
+**/.pnpm-store/
+
+# Build artifacts
+release/
+bin/
+mgr/webui/dist/*
+!mgr/webui/dist/.gitkeep
+mgr/server/dist/*
+!mgr/server/dist/.gitkeep
+mgr/server/website/*
+!mgr/server/website/.gitkeep
+scripts/dist/*
+!scripts/dist/.gitkeep
+tools/dist/*
+!tools/dist/.gitkeep
+
+# Logs
+*.log
