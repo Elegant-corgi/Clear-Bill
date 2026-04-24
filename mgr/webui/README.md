@@ -1,6 +1,6 @@
 # Clear Bill Web UI
 
-This frontend keeps the `mgr/webui` location from `lxopeasier`, but the implementation is intentionally modernized:
+This frontend lives in `mgr/webui` and is built with a modern stack:
 
 - React 18
 - Vite

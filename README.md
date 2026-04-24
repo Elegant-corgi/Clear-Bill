@@ -1,6 +1,6 @@
 # Clear Bill
 
-`Clear-Bill` 的目录组织参考了 `../lxopeasier`，但前端技术栈已经按本项目要求切换为 `Ant Design 6`。
+Clear Bill 是一个面向账单、客户与对账流程的管理系统，当前仓库已经包含前后端基础骨架、示例接口和可运行的界面。
 
 ## 项目结构
 
@@ -9,15 +9,18 @@
 - `scripts`：运维与辅助脚本
 - `tools`：工具脚本与检查工具
 
-## 技术说明
+## 技术栈
 
-前端保留了参考项目的目录位置，也就是仍然放在 `mgr/webui` 下，但没有继续沿用旧的 Umi 方案，而是重建为更适合当前项目的组合：
+前端：
 
 - React 18
 - Vite
 - Ant Design 6
 
-这样可以在保持整体目录架构一致的同时，避免沿用过旧的前端运行时和配置方式。
+后端：
+
+- Go
+- Gin
 
 ## 快速开始
 
@@ -28,7 +31,7 @@ cd mgr/server
 go run ./cmd/clearbill
 ```
 
-默认监听地址可通过环境变量配置：
+默认环境变量：
 
 - `CLEAR_BILL_HTTP_ADDR`：服务监听地址，默认 `:8080`
 - `CLEAR_BILL_WEB_ROOT`：前端静态资源目录，默认 `./website`
@@ -51,14 +54,14 @@ pnpm dev
 make dist
 ```
 
-如果只想构建前端：
+单独构建前端：
 
 ```bash
 cd mgr/webui
 pnpm build
 ```
 
-如果只想构建后端：
+单独构建后端：
 
 ```bash
 cd mgr/server
@@ -73,7 +76,7 @@ go build ./cmd/clearbill
 make release
 ```
 
-会生成类似参考项目的发布目录，并整理以下内容：
+会生成发布目录，并整理以下内容：
 
 - 后端产物到 `release/clear-bill-<version>/server`
 - 前端构建结果到 `release/clear-bill-<version>/server/website`
@@ -83,9 +86,10 @@ make release
 
 ## 当前状态
 
-当前仓库已经完成一套可运行的基础骨架：
+当前仓库已经完成一套可运行的基础版本：
 
-- 后端提供了基础示例接口
+- 后端提供了健康检查、仪表盘、账单、客户、对账等示例接口
+- 后端内部已按 `action / bll / dal` 三层结构组织
 - 前端提供了基于 `Ant Design 6` 的示例工作台页面
 - 顶层 `Makefile` 已接入统一构建与发布入口
 
