@@ -7,14 +7,14 @@ import { router } from "@/routes";
 const appTheme: ThemeConfig = {
   algorithm: theme.defaultAlgorithm,
   token: {
-    colorPrimary: "#0f766e",
-    colorInfo: "#0f766e",
-    colorSuccess: "#0f8b8d",
-    colorWarning: "#d97706",
-    colorError: "#dc2626",
-    borderRadius: 22,
-    colorBgBase: "#f7f7f2",
-    colorTextBase: "#132238",
+    colorPrimary: "#20c787",
+    colorInfo: "#3f8cff",
+    colorSuccess: "#20c787",
+    colorWarning: "#ffb545",
+    colorError: "#ff4d4f",
+    borderRadius: 8,
+    colorBgBase: "#f5f7fb",
+    colorTextBase: "#17233d",
     fontFamily: '"Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif',
   },
 };
