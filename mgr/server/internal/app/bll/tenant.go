@@ -2,23 +2,27 @@ package bll
 
 import (
 	"context"
+	"fmt"
 
 	"clearbill/mgr/server/api/vo"
 	"clearbill/mgr/server/internal/app/dal"
 	"clearbill/mgr/server/internal/app/dal/dbmodel"
+	"clearbill/mgr/server/pkg/passwordx"
 )
 
 type TenantService struct {
 	TenantDAL *dal.TenantDAL
+	UserDAL   *dal.UserDAL
 }
 
-func NewTenantService(tenantDAL *dal.TenantDAL) *TenantService {
+func NewTenantService(tenantDAL *dal.TenantDAL, userDAL *dal.UserDAL) *TenantService {
 	return &TenantService{
 		TenantDAL: tenantDAL,
+		UserDAL:   userDAL,
 	}
 }
 
-func (s *TenantService) CreateTenant(ctx context.Context, req *vo.CreateTenantReq) (*vo.Tenant, error) {
+func (s *TenantService) CreateTenant(ctx context.Context, req *vo.CreateTenantReq) (*vo.CreateTenantResp, error) {
 	tenant := &dbmodel.Tenant{
 		Code:         req.Code,
 		Name:         req.Name,
@@ -35,7 +39,36 @@ func (s *TenantService) CreateTenant(ctx context.Context, req *vo.CreateTenantRe
 		return nil, err
 	}
 
-	return toTenantVO(tenant), nil
+	adminUsername := req.AdminUsername
+	if adminUsername == "" {
+		adminUsername = fmt.Sprintf("%s_admin", req.Code)
+	}
+	adminDisplayName := req.AdminDisplayName
+	if adminDisplayName == "" {
+		adminDisplayName = fmt.Sprintf("%s Admin", req.Name)
+	}
+	hash, err := passwordx.HashPassword(dbmodel.DefaultUserPassword)
+	if err != nil {
+		return nil, err
+	}
+	admin := &dbmodel.User{
+		Username:     adminUsername,
+		DisplayName:  adminDisplayName,
+		PasswordHash: hash,
+		Role:         dbmodel.RoleTenantAdmin,
+		TenantID:     &tenant.ID,
+		Status:       dbmodel.StatusActive,
+	}
+	if err := s.UserDAL.Create(ctx, admin); err != nil {
+		_ = s.TenantDAL.Delete(ctx, tenant.ID)
+		return nil, err
+	}
+
+	return &vo.CreateTenantResp{
+		Tenant:          *toTenantVO(tenant),
+		AdminUsername:   adminUsername,
+		InitialPassword: dbmodel.DefaultUserPassword,
+	}, nil
 }
 
 func (s *TenantService) ListTenants(ctx context.Context, req *vo.ListTenantReq) ([]vo.Tenant, error) {

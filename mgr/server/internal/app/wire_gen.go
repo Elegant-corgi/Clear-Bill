@@ -22,6 +22,11 @@ func BuildInjector(cfg config.Config) (*Injector, error) {
 		return nil, err
 	}
 	engine := InitGinEngine(cfg)
+	userDAL := dal.NewUserDAL(gormDB)
+	sessionDAL := dal.NewSessionDAL(gormDB)
+	apiTokenDAL := dal.NewAPITokenDAL(gormDB)
+	authService := bll.NewAuthService(userDAL, sessionDAL, apiTokenDAL)
+	authAction := action.NewAuthAction(authService)
 	systemDAL := dal.NewSystemDAL()
 	systemService := bll.NewSystemService(systemDAL)
 	systemAction := action.NewSystemAction(systemService)
@@ -29,23 +34,32 @@ func BuildInjector(cfg config.Config) (*Injector, error) {
 	billingService := bll.NewBillingService(billingDAL)
 	billingAction := action.NewBillingAction(billingService)
 	tenantDAL := dal.NewTenantDAL(gormDB)
-	tenantService := bll.NewTenantService(tenantDAL)
+	tenantService := bll.NewTenantService(tenantDAL, userDAL)
 	tenantAction := action.NewTenantAction(tenantService)
-	router := InitRouter(cfg, systemAction, billingAction, tenantAction, engine)
+	userService := bll.NewUserService(userDAL, tenantDAL)
+	userAction := action.NewUserAction(userService)
+	router := InitRouter(cfg, authService, authAction, systemAction, billingAction, tenantAction, userAction, engine)
 	injector := &Injector{
 		Config:         cfg,
 		DBClient:       gormDB,
 		Engine:         engine,
 		Router:         router,
+		APITokenDAL:    apiTokenDAL,
+		AuthAction:     authAction,
 		SystemAction:   systemAction,
 		BillingAction:  billingAction,
 		TenantAction:   tenantAction,
+		UserAction:     userAction,
+		AuthService:    authService,
 		SystemService:  systemService,
 		BillingService: billingService,
 		TenantService:  tenantService,
+		UserService:    userService,
 		SystemDAL:      systemDAL,
 		BillingDAL:     billingDAL,
 		TenantDAL:      tenantDAL,
+		UserDAL:        userDAL,
+		SessionDAL:     sessionDAL,
 	}
 	return injector, nil
 }

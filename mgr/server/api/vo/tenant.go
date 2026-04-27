@@ -15,12 +15,20 @@ type Tenant struct {
 }
 
 type CreateTenantReq struct {
-	Code         string `json:"code" binding:"required,max=64"`
-	Name         string `json:"name" binding:"required,max=128"`
-	ContactName  string `json:"contactName" binding:"max=64"`
-	ContactPhone string `json:"contactPhone" binding:"max=32"`
-	Status       string `json:"status" binding:"max=32"`
-	Remark       string `json:"remark" binding:"max=255"`
+	Code             string `json:"code" binding:"required,max=64"`
+	Name             string `json:"name" binding:"required,max=128"`
+	AdminUsername    string `json:"adminUsername" binding:"max=64"`
+	AdminDisplayName string `json:"adminDisplayName" binding:"max=128"`
+	ContactName      string `json:"contactName" binding:"max=64"`
+	ContactPhone     string `json:"contactPhone" binding:"max=32"`
+	Status           string `json:"status" binding:"max=32"`
+	Remark           string `json:"remark" binding:"max=255"`
+}
+
+type CreateTenantResp struct {
+	Tenant          Tenant `json:"tenant"`
+	AdminUsername   string `json:"adminUsername"`
+	InitialPassword string `json:"initialPassword"`
 }
 
 type UpdateTenantReq struct {
