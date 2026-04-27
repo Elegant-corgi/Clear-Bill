@@ -31,10 +31,15 @@ cd mgr/server
 go run ./cmd/clearbill
 ```
 
-默认环境变量：
+后端默认会从以下文件读取静态配置：
+
+- `mgr/server/configs/config.toml`
+
+支持的环境变量覆盖：
 
 - `CLEAR_BILL_HTTP_ADDR`：服务监听地址，默认 `:8080`
 - `CLEAR_BILL_WEB_ROOT`：前端静态资源目录，默认 `./website`
+- `CLEAR_BILL_CONFIG`：自定义配置文件路径
 
 ### 启动前端
 

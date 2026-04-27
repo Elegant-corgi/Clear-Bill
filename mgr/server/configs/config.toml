@@ -1,0 +1,21 @@
+# Runtime mode: debug / test / release
+RunMode = "debug"
+
+# Static website directory served by the backend
+WWW = "website"
+
+# Print resolved configuration on startup
+PrintConfig = false
+
+[HTTP]
+# Bind address
+Host = "0.0.0.0"
+
+# Bind port
+Port = 8080
+
+# Request header timeout in seconds
+ServeTimeout = 5
+
+# Graceful shutdown timeout in seconds
+ShutdownTimeout = 5

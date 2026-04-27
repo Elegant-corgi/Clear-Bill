@@ -1,8 +1,11 @@
 # Server Config
 
-Runtime configuration is environment-driven for the initial scaffold.
+The backend now loads static startup parameters from:
 
-Supported variables:
+- `configs/config.toml`
 
-- `CLEAR_BILL_HTTP_ADDR`: server listen address, default `:8080`
-- `CLEAR_BILL_WEB_ROOT`: static web root, default `./website`
+Supported environment overrides:
+
+- `CLEAR_BILL_CONFIG`: custom config file path
+- `CLEAR_BILL_HTTP_ADDR`: override listen address
+- `CLEAR_BILL_WEB_ROOT`: override static web root
