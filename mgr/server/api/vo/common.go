@@ -6,6 +6,12 @@ type ResponseResult struct {
 	Error   string `json:"error,omitempty"`
 }
 
+const OKStatus = "ok"
+
+type StatusResult struct {
+	Status string `json:"status"`
+}
+
 type ListResult struct {
 	List any `json:"list"`
 }

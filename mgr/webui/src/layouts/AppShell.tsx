@@ -11,6 +11,7 @@ import { App, Button, Drawer, Dropdown, Grid, Layout } from "antd";
 import type { MenuProps } from "antd";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
+import defaultSettings from "@config/defaultSettings";
 import {
   homeNavigationItem,
   navigationGroups,
@@ -62,7 +63,7 @@ function Sidebar({
         <span className="shell__logo-mark">
           <FileDoneOutlined />
         </span>
-        {!collapsed ? <strong>账单计费系统</strong> : null}
+        {!collapsed ? <strong>{defaultSettings.title}</strong> : null}
       </div>
 
       <nav className="shell__menu" aria-label="后台导航">

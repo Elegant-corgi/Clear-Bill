@@ -2,13 +2,14 @@ package action
 
 import (
 	"errors"
-	"net/http"
 	"strconv"
 	"strings"
 
 	"clearbill/mgr/server/api/vo"
 	"clearbill/mgr/server/internal/app/bll"
-	"clearbill/mgr/server/pkg/httpx"
+	"clearbill/mgr/server/internal/app/dal/dbmodel"
+	"clearbill/mgr/server/internal/app/ginx"
+	"clearbill/mgr/server/internal/app/middleware"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -35,9 +36,13 @@ func NewTenantAction(tenantService *bll.TenantService) *TenantAction {
 // @ID       tenants-create
 // @Tags     tenant
 func (a *TenantAction) CreateTenant(c *gin.Context) {
+	if !requireSysadmin(c) {
+		return
+	}
+
 	var req vo.CreateTenantReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httpx.WriteError(c.Writer, http.StatusBadRequest, err.Error())
+	if err := ginx.ParseJSON(c, &req); err != nil {
+		ginx.ResError(c, err, 400)
 		return
 	}
 
@@ -47,7 +52,7 @@ func (a *TenantAction) CreateTenant(c *gin.Context) {
 		return
 	}
 
-	httpx.WriteData(c.Writer, http.StatusCreated, data)
+	ginx.ResSuccess(c, data)
 }
 
 // ListTenants 查询租户列表
@@ -60,9 +65,13 @@ func (a *TenantAction) CreateTenant(c *gin.Context) {
 // @ID       tenants-list
 // @Tags     tenant
 func (a *TenantAction) ListTenants(c *gin.Context) {
+	if !requireSysadmin(c) {
+		return
+	}
+
 	var req vo.ListTenantReq
-	if err := c.ShouldBindQuery(&req); err != nil {
-		httpx.WriteError(c.Writer, http.StatusBadRequest, err.Error())
+	if err := ginx.ParseQuery(c, &req); err != nil {
+		ginx.ResError(c, err, 400)
 		return
 	}
 
@@ -72,7 +81,7 @@ func (a *TenantAction) ListTenants(c *gin.Context) {
 		return
 	}
 
-	httpx.WriteData(c.Writer, http.StatusOK, data)
+	ginx.ResSuccess(c, data)
 }
 
 // GetTenant 查询租户详情
@@ -86,9 +95,13 @@ func (a *TenantAction) ListTenants(c *gin.Context) {
 // @ID       tenants-get
 // @Tags     tenant
 func (a *TenantAction) GetTenant(c *gin.Context) {
+	if !requireSysadmin(c) {
+		return
+	}
+
 	id, err := parseTenantID(c.Param("id"))
 	if err != nil {
-		httpx.WriteError(c.Writer, http.StatusBadRequest, err.Error())
+		ginx.ResError(c, err, 400)
 		return
 	}
 
@@ -98,7 +111,7 @@ func (a *TenantAction) GetTenant(c *gin.Context) {
 		return
 	}
 
-	httpx.WriteData(c.Writer, http.StatusOK, data)
+	ginx.ResSuccess(c, data)
 }
 
 // UpdateTenant 更新租户
@@ -115,15 +128,19 @@ func (a *TenantAction) GetTenant(c *gin.Context) {
 // @ID       tenants-update
 // @Tags     tenant
 func (a *TenantAction) UpdateTenant(c *gin.Context) {
+	if !requireSysadmin(c) {
+		return
+	}
+
 	id, err := parseTenantID(c.Param("id"))
 	if err != nil {
-		httpx.WriteError(c.Writer, http.StatusBadRequest, err.Error())
+		ginx.ResError(c, err, 400)
 		return
 	}
 
 	var req vo.UpdateTenantReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httpx.WriteError(c.Writer, http.StatusBadRequest, err.Error())
+	if err := ginx.ParseJSON(c, &req); err != nil {
+		ginx.ResError(c, err, 400)
 		return
 	}
 
@@ -133,7 +150,7 @@ func (a *TenantAction) UpdateTenant(c *gin.Context) {
 		return
 	}
 
-	httpx.WriteData(c.Writer, http.StatusOK, data)
+	ginx.ResSuccess(c, data)
 }
 
 // DeleteTenant 删除租户
@@ -147,9 +164,13 @@ func (a *TenantAction) UpdateTenant(c *gin.Context) {
 // @ID       tenants-delete
 // @Tags     tenant
 func (a *TenantAction) DeleteTenant(c *gin.Context) {
+	if !requireSysadmin(c) {
+		return
+	}
+
 	id, err := parseTenantID(c.Param("id"))
 	if err != nil {
-		httpx.WriteError(c.Writer, http.StatusBadRequest, err.Error())
+		ginx.ResError(c, err, 400)
 		return
 	}
 
@@ -158,7 +179,20 @@ func (a *TenantAction) DeleteTenant(c *gin.Context) {
 		return
 	}
 
-	httpx.WriteData(c.Writer, http.StatusOK, gin.H{"deleted": true})
+	ginx.ResOK(c)
+}
+
+func requireSysadmin(c *gin.Context) bool {
+	user := middleware.CurrentUser(c)
+	if user == nil {
+		ginx.ResError(c, errors.New("unauthorized"), 401)
+		return false
+	}
+	if user.Role != dbmodel.RoleSysadmin {
+		ginx.ResError(c, errors.New("permission denied"), 403)
+		return false
+	}
+	return true
 }
 
 func parseTenantID(raw string) (uint, error) {
@@ -173,10 +207,10 @@ func parseTenantID(raw string) (uint, error) {
 func writeTenantError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
-		httpx.WriteError(c.Writer, http.StatusNotFound, "tenant not found")
+		ginx.ResError(c, errors.New("tenant not found"), 404)
 	case strings.Contains(strings.ToLower(err.Error()), "duplicate"):
-		httpx.WriteError(c.Writer, http.StatusConflict, err.Error())
+		ginx.ResError(c, err, 409)
 	default:
-		httpx.WriteError(c.Writer, http.StatusInternalServerError, err.Error())
+		ginx.ResError(c, err, 500)
 	}
 }

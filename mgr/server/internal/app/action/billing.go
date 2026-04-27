@@ -1,11 +1,9 @@
 package action
 
 import (
-	"net/http"
-
 	"clearbill/mgr/server/api/vo"
 	"clearbill/mgr/server/internal/app/bll"
-	"clearbill/mgr/server/pkg/httpx"
+	"clearbill/mgr/server/internal/app/ginx"
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,11 +30,11 @@ func NewBillingAction(billingService *bll.BillingService) *BillingAction {
 func (a *BillingAction) DashboardSummary(c *gin.Context) {
 	data, err := a.BillingService.GetDashboardSummary(c.Request.Context())
 	if err != nil {
-		httpx.WriteError(c.Writer, http.StatusInternalServerError, err.Error())
+		ginx.ResError(c, err, 500)
 		return
 	}
 
-	httpx.WriteData(c.Writer, http.StatusOK, data)
+	ginx.ResSuccess(c, data)
 }
 
 // ListBills 查询账单列表
@@ -50,11 +48,11 @@ func (a *BillingAction) DashboardSummary(c *gin.Context) {
 func (a *BillingAction) ListBills(c *gin.Context) {
 	data, err := a.BillingService.ListBills(c.Request.Context())
 	if err != nil {
-		httpx.WriteError(c.Writer, http.StatusInternalServerError, err.Error())
+		ginx.ResError(c, err, 500)
 		return
 	}
 
-	httpx.WriteData(c.Writer, http.StatusOK, data)
+	ginx.ResSuccess(c, data)
 }
 
 // ListCustomers 查询客户列表
@@ -68,11 +66,11 @@ func (a *BillingAction) ListBills(c *gin.Context) {
 func (a *BillingAction) ListCustomers(c *gin.Context) {
 	data, err := a.BillingService.ListCustomers(c.Request.Context())
 	if err != nil {
-		httpx.WriteError(c.Writer, http.StatusInternalServerError, err.Error())
+		ginx.ResError(c, err, 500)
 		return
 	}
 
-	httpx.WriteData(c.Writer, http.StatusOK, data)
+	ginx.ResSuccess(c, data)
 }
 
 // ListReconciliationTasks 查询对账任务列表
@@ -86,9 +84,9 @@ func (a *BillingAction) ListCustomers(c *gin.Context) {
 func (a *BillingAction) ListReconciliationTasks(c *gin.Context) {
 	data, err := a.BillingService.ListReconciliationTasks(c.Request.Context())
 	if err != nil {
-		httpx.WriteError(c.Writer, http.StatusInternalServerError, err.Error())
+		ginx.ResError(c, err, 500)
 		return
 	}
 
-	httpx.WriteData(c.Writer, http.StatusOK, data)
+	ginx.ResSuccess(c, data)
 }

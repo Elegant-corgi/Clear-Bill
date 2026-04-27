@@ -1,3 +1,5 @@
+import appConfig from "@config/config";
+
 interface ApiEnvelope<T> {
   success: boolean;
   data: T;
@@ -6,7 +8,7 @@ interface ApiEnvelope<T> {
 
 export async function requestWithFallback<T>(path: string, fallback: T): Promise<T> {
   try {
-    const response = await fetch(path, {
+    const response = await fetch(`${appConfig.apiPrefix}${path}`, {
       headers: {
         Accept: "application/json",
       },
