@@ -21,6 +21,7 @@ func (r *Router) RegisterAPI(app *gin.Engine) {
 
 	r.registerSystemRoutes(v1)
 	r.registerBillingRoutes(v1)
+	r.registerTenantRoutes(v1)
 	r.registerWebsite(app)
 }
 
@@ -33,6 +34,15 @@ func (r *Router) registerBillingRoutes(v1 *gin.RouterGroup) {
 	v1.GET("/bills", r.BillingAction.ListBills)
 	v1.GET("/customers", r.BillingAction.ListCustomers)
 	v1.GET("/reconciliations", r.BillingAction.ListReconciliationTasks)
+}
+
+func (r *Router) registerTenantRoutes(v1 *gin.RouterGroup) {
+	tenants := v1.Group("/tenants")
+	tenants.POST("", r.TenantAction.CreateTenant)
+	tenants.GET("", r.TenantAction.ListTenants)
+	tenants.GET("/:id", r.TenantAction.GetTenant)
+	tenants.PUT("/:id", r.TenantAction.UpdateTenant)
+	tenants.DELETE("/:id", r.TenantAction.DeleteTenant)
 }
 
 func (r *Router) registerWebsite(app *gin.Engine) {

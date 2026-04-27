@@ -10,6 +10,8 @@ import (
 	"clearbill/mgr/server/internal/app/bll"
 	"clearbill/mgr/server/internal/app/config"
 	"clearbill/mgr/server/internal/app/dal"
+	"clearbill/mgr/server/internal/app/dal/dbmodel"
+	"clearbill/mgr/server/internal/app/db"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,14 +22,25 @@ type Server struct {
 
 func NewServer() *Server {
 	cfg := config.Load()
+	gormDB, err := db.NewMySQL(cfg)
+	if err != nil {
+		panic(err)
+	}
+	if err := gormDB.AutoMigrate(&dbmodel.Tenant{}); err != nil {
+		panic(err)
+	}
+
 	systemDAL := dal.NewSystemDAL()
 	billingDAL := dal.NewBillingDAL()
+	tenantDAL := dal.NewTenantDAL(gormDB)
 
 	systemService := bll.NewSystemService(systemDAL)
 	billingService := bll.NewBillingService(billingDAL)
+	tenantService := bll.NewTenantService(tenantDAL)
 
 	systemAction := action.NewSystemAction(systemService)
 	billingAction := action.NewBillingAction(billingService)
+	tenantAction := action.NewTenantAction(tenantService)
 
 	switch cfg.RunMode {
 	case gin.ReleaseMode, gin.TestMode, gin.DebugMode:
@@ -36,7 +49,7 @@ func NewServer() *Server {
 
 	engine := gin.New()
 	engine.Use(gin.Recovery())
-	router.New(cfg, systemAction, billingAction).Register(engine)
+	router.New(cfg, systemAction, billingAction, tenantAction).Register(engine)
 
 	return &Server{
 		httpServer: &http.Server{

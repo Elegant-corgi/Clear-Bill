@@ -15,6 +15,7 @@ type Router struct {
 	Config        config.Config
 	SystemAction  *action.SystemAction
 	BillingAction *action.BillingAction
+	TenantAction  *action.TenantAction
 }
 
 var _ IRouter = (*Router)(nil)
@@ -23,11 +24,13 @@ func New(
 	cfg config.Config,
 	systemAction *action.SystemAction,
 	billingAction *action.BillingAction,
+	tenantAction *action.TenantAction,
 ) *Router {
 	return &Router{
 		Config:        cfg,
 		SystemAction:  systemAction,
 		BillingAction: billingAction,
+		TenantAction:  tenantAction,
 	}
 }
 

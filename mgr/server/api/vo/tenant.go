@@ -1,0 +1,37 @@
+package vo
+
+import "time"
+
+type Tenant struct {
+	ID           uint      `json:"id"`
+	Code         string    `json:"code"`
+	Name         string    `json:"name"`
+	ContactName  string    `json:"contactName"`
+	ContactPhone string    `json:"contactPhone"`
+	Status       string    `json:"status"`
+	Remark       string    `json:"remark"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
+type CreateTenantReq struct {
+	Code         string `json:"code" binding:"required,max=64"`
+	Name         string `json:"name" binding:"required,max=128"`
+	ContactName  string `json:"contactName" binding:"max=64"`
+	ContactPhone string `json:"contactPhone" binding:"max=32"`
+	Status       string `json:"status" binding:"max=32"`
+	Remark       string `json:"remark" binding:"max=255"`
+}
+
+type UpdateTenantReq struct {
+	Code         string `json:"code" binding:"required,max=64"`
+	Name         string `json:"name" binding:"required,max=128"`
+	ContactName  string `json:"contactName" binding:"max=64"`
+	ContactPhone string `json:"contactPhone" binding:"max=32"`
+	Status       string `json:"status" binding:"max=32"`
+	Remark       string `json:"remark" binding:"max=255"`
+}
+
+type ListTenantReq struct {
+	Keyword string `form:"keyword"`
+}
