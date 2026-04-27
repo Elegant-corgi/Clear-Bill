@@ -29,7 +29,7 @@ func NewUserAction(userService *bll.UserService) *UserAction {
 // @Accept   json
 // @Produce  json
 // @Param    body  body      vo.CreateUserReq   true  "body参数"
-// @Success  201   {object}  vo.ResponseResult  "执行成功"
+// @Success  200   {object}  vo.ResponseResult  "执行成功"
 // @Router   /api/v1/users [post]
 // @ID       users-create
 // @Tags     user

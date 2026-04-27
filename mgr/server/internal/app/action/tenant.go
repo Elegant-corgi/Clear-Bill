@@ -18,7 +18,7 @@ type TenantAction struct {
 	TenantService *bll.TenantService
 }
 
-func NewTenantAction(tenantService *bll.TenantService) *TenantAction {
+func NewTenantAction(tenantService *bll.TenantService, _ ...*bll.RoleService) *TenantAction {
 	return &TenantAction{
 		TenantService: tenantService,
 	}
@@ -30,7 +30,7 @@ func NewTenantAction(tenantService *bll.TenantService) *TenantAction {
 // @Accept   json
 // @Produce  json
 // @Param    body  body      vo.CreateTenantReq  true  "body参数"
-// @Success  201   {object}  vo.ResponseResult   "执行成功"
+// @Success  200   {object}  vo.ResponseResult   "执行成功"
 // @Failure  400   {object}  vo.ResponseResult   "参数错误"
 // @Router   /api/v1/tenants [post]
 // @ID       tenants-create

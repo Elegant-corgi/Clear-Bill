@@ -11,22 +11,31 @@ import (
 )
 
 type UserService struct {
-	UserDAL   *dal.UserDAL
-	TenantDAL *dal.TenantDAL
+	UserDAL     *dal.UserDAL
+	TenantDAL   *dal.TenantDAL
+	RoleService *RoleService
 }
 
-func NewUserService(userDAL *dal.UserDAL, tenantDAL *dal.TenantDAL) *UserService {
+func NewUserService(userDAL *dal.UserDAL, tenantDAL *dal.TenantDAL, roleService *RoleService) *UserService {
 	return &UserService{
-		UserDAL:   userDAL,
-		TenantDAL: tenantDAL,
+		UserDAL:     userDAL,
+		TenantDAL:   tenantDAL,
+		RoleService: roleService,
 	}
 }
 
 func (s *UserService) ListUsers(ctx context.Context, actor *dbmodel.User, req *vo.ListUserReq) ([]vo.User, error) {
+	role, err := s.RoleService.GetActorRole(ctx, actor)
+	if err != nil {
+		return nil, err
+	}
+
 	tenantID := req.TenantID
-	if actor.Role == dbmodel.RoleTenantAdmin {
+	switch role.Scope {
+	case dbmodel.RoleScopeSystem:
+	case dbmodel.RoleScopeTenant:
 		tenantID = actor.TenantID
-	} else if actor.Role != dbmodel.RoleSysadmin {
+	default:
 		return nil, errors.New("permission denied")
 	}
 
@@ -43,7 +52,7 @@ func (s *UserService) ListUsers(ctx context.Context, actor *dbmodel.User, req *v
 }
 
 func (s *UserService) CreateUser(ctx context.Context, actor *dbmodel.User, req *vo.CreateUserReq) (*vo.CreateUserResp, error) {
-	tenantID, role, err := s.normalizeCreateScope(ctx, actor, req.TenantID, req.Role)
+	role, tenantID, err := s.RoleService.ValidateRoleAssignment(ctx, actor, req.Role, req.TenantID)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +66,7 @@ func (s *UserService) CreateUser(ctx context.Context, actor *dbmodel.User, req *
 		Username:     req.Username,
 		DisplayName:  req.DisplayName,
 		PasswordHash: hash,
-		Role:         role,
+		Role:         role.Code,
 		TenantID:     tenantID,
 		Status:       normalizeStatus(req.Status),
 	}
@@ -76,7 +85,11 @@ func (s *UserService) GetUser(ctx context.Context, actor *dbmodel.User, id uint)
 	if err != nil {
 		return nil, err
 	}
-	if !canManageUser(actor, user) && actor.ID != user.ID {
+	canManage, err := s.canManageUser(ctx, actor, user)
+	if err != nil {
+		return nil, err
+	}
+	if !canManage && actor.ID != user.ID {
 		return nil, errors.New("permission denied")
 	}
 	result := ToUserVO(user)
@@ -88,32 +101,21 @@ func (s *UserService) UpdateUser(ctx context.Context, actor *dbmodel.User, id ui
 	if err != nil {
 		return nil, err
 	}
-	if !canManageUser(actor, user) {
+	canManage, err := s.canManageUser(ctx, actor, user)
+	if err != nil {
+		return nil, err
+	}
+	if !canManage {
 		return nil, errors.New("permission denied")
 	}
 
-	role := req.Role
-	tenantID := req.TenantID
-	if actor.Role == dbmodel.RoleTenantAdmin {
-		role = restrictRole(role)
-		tenantID = actor.TenantID
-	}
-	if role == dbmodel.RoleSysadmin && actor.Role != dbmodel.RoleSysadmin {
-		return nil, errors.New("permission denied")
-	}
-	if role != dbmodel.RoleSysadmin {
-		if tenantID == nil {
-			return nil, errors.New("tenantId is required")
-		}
-		if _, err := s.TenantDAL.GetByID(ctx, *tenantID); err != nil {
-			return nil, err
-		}
-	} else {
-		tenantID = nil
+	role, tenantID, err := s.RoleService.ValidateRoleAssignment(ctx, actor, req.Role, req.TenantID)
+	if err != nil {
+		return nil, err
 	}
 
 	user.DisplayName = req.DisplayName
-	user.Role = role
+	user.Role = role.Code
 	user.TenantID = tenantID
 	user.Status = normalizeStatus(req.Status)
 	if err := s.UserDAL.Update(ctx, user); err != nil {
@@ -131,7 +133,11 @@ func (s *UserService) DeleteUser(ctx context.Context, actor *dbmodel.User, id ui
 	if actor.ID == user.ID {
 		return errors.New("cannot delete current user")
 	}
-	if !canManageUser(actor, user) {
+	canManage, err := s.canManageUser(ctx, actor, user)
+	if err != nil {
+		return err
+	}
+	if !canManage {
 		return errors.New("permission denied")
 	}
 	return s.UserDAL.Delete(ctx, id)
@@ -142,7 +148,11 @@ func (s *UserService) ResetPassword(ctx context.Context, actor *dbmodel.User, id
 	if err != nil {
 		return err
 	}
-	if !canManageUser(actor, user) {
+	canManage, err := s.canManageUser(ctx, actor, user)
+	if err != nil {
+		return err
+	}
+	if !canManage {
 		return errors.New("permission denied")
 	}
 	hash, err := passwordx.HashPassword(req.NewPassword)
@@ -153,47 +163,22 @@ func (s *UserService) ResetPassword(ctx context.Context, actor *dbmodel.User, id
 	return s.UserDAL.Update(ctx, user)
 }
 
-func (s *UserService) normalizeCreateScope(ctx context.Context, actor *dbmodel.User, tenantID *uint, role string) (*uint, string, error) {
-	switch actor.Role {
-	case dbmodel.RoleSysadmin:
-		if role == dbmodel.RoleSysadmin {
-			return nil, role, nil
+func (s *UserService) canManageUser(ctx context.Context, actor, target *dbmodel.User) (bool, error) {
+	role, err := s.RoleService.GetActorRole(ctx, actor)
+	if err != nil {
+		return false, err
+	}
+	switch role.Scope {
+	case dbmodel.RoleScopeSystem:
+		return true, nil
+	case dbmodel.RoleScopeTenant:
+		if actor.TenantID == nil || target.TenantID == nil {
+			return false, nil
 		}
-		if tenantID == nil {
-			return nil, "", errors.New("tenantId is required")
-		}
-		if _, err := s.TenantDAL.GetByID(ctx, *tenantID); err != nil {
-			return nil, "", err
-		}
-		return tenantID, restrictRole(role), nil
-	case dbmodel.RoleTenantAdmin:
-		if actor.TenantID == nil {
-			return nil, "", errors.New("tenant admin missing tenant scope")
-		}
-		return actor.TenantID, restrictRole(role), nil
+		return *actor.TenantID == *target.TenantID && target.Role != dbmodel.RoleSysadmin, nil
 	default:
-		return nil, "", errors.New("permission denied")
+		return false, nil
 	}
-}
-
-func canManageUser(actor, target *dbmodel.User) bool {
-	if actor.Role == dbmodel.RoleSysadmin {
-		return true
-	}
-	if actor.Role != dbmodel.RoleTenantAdmin {
-		return false
-	}
-	if actor.TenantID == nil || target.TenantID == nil {
-		return false
-	}
-	return *actor.TenantID == *target.TenantID && target.Role != dbmodel.RoleSysadmin
-}
-
-func restrictRole(role string) string {
-	if role == dbmodel.RoleTenantAdmin {
-		return dbmodel.RoleTenantAdmin
-	}
-	return dbmodel.RoleUser
 }
 
 func normalizeStatus(status string) string {

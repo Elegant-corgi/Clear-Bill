@@ -21,29 +21,36 @@ func newTestRouter() *Router {
 	systemDAL := dal.NewSystemDAL()
 	billingDAL := dal.NewBillingDAL()
 	tenantDAL := dal.NewTenantDAL(nil)
+	roleDAL := dal.NewRoleDAL(nil)
+	rolePermissionDAL := dal.NewRolePermissionDAL(nil)
 	userDAL := dal.NewUserDAL(nil)
 	sessionDAL := dal.NewSessionDAL(nil)
 	apiTokenDAL := dal.NewAPITokenDAL(nil)
+	permissionCatalog := bll.NewPermissionCatalog()
 
 	authService := bll.NewAuthService(userDAL, sessionDAL, apiTokenDAL)
 	systemService := bll.NewSystemService(systemDAL)
 	billingService := bll.NewBillingService(billingDAL)
 	tenantService := bll.NewTenantService(tenantDAL, userDAL)
-	userService := bll.NewUserService(userDAL, tenantDAL)
+	roleService := bll.NewRoleService(roleDAL, rolePermissionDAL, userDAL, tenantDAL, permissionCatalog)
+	userService := bll.NewUserService(userDAL, tenantDAL, roleService)
 
 	authAction := action.NewAuthAction(authService)
 	systemAction := action.NewSystemAction(systemService)
 	billingAction := action.NewBillingAction(billingService)
-	tenantAction := action.NewTenantAction(tenantService)
+	tenantAction := action.NewTenantAction(tenantService, roleService)
+	roleAction := action.NewRoleAction(roleService)
 	userAction := action.NewUserAction(userService)
 
 	return New(
 		config.Config{WebRoot: "website"},
 		authService,
+		roleService,
 		authAction,
 		systemAction,
 		billingAction,
 		tenantAction,
+		roleAction,
 		userAction,
 	)
 }
@@ -115,7 +122,8 @@ func TestBillsEndpoint(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	handler := gin.New()
 	newTestRouter().Register(handler)
-	request := httptest.NewRequest(http.MethodGet, "/api/v1/bills", nil)
+	sysadminSession := loginSession(t, handler, "sysadmin", "bill123;")
+	request := authorizedJSONRequest(http.MethodGet, "/api/v1/bills", sysadminSession, "")
 	recorder := httptest.NewRecorder()
 
 	handler.ServeHTTP(recorder, request)
@@ -228,6 +236,102 @@ func TestAuthTenantAndUserFlow(t *testing.T) {
 	}
 	if !strings.Contains(createTokenResp.Body.String(), "external-client") {
 		t.Fatalf("expected api token response")
+	}
+}
+
+func TestRBACRolePermissionFlow(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler := gin.New()
+	newTestRouter().Register(handler)
+
+	sysadminSession := loginSession(t, handler, "sysadmin", "bill123;")
+
+	createTenantReq := authorizedJSONRequest(
+		http.MethodPost,
+		"/api/v1/tenants",
+		sysadminSession,
+		`{"code":"tenant-b","name":"Tenant B"}`,
+	)
+	createTenantResp := httptest.NewRecorder()
+	handler.ServeHTTP(createTenantResp, createTenantReq)
+	if createTenantResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", createTenantResp.Code, createTenantResp.Body.String())
+	}
+
+	var tenantPayload struct {
+		Success bool                `json:"success"`
+		Data    vo.CreateTenantResp `json:"data"`
+	}
+	if err := json.Unmarshal(createTenantResp.Body.Bytes(), &tenantPayload); err != nil {
+		t.Fatalf("failed to parse tenant response: %v", err)
+	}
+
+	tenantAdminSession := loginSession(t, handler, tenantPayload.Data.AdminUsername, "bill123;")
+
+	listPermissionsReq := authorizedJSONRequest(http.MethodGet, "/api/v1/permissions", tenantAdminSession, "")
+	listPermissionsResp := httptest.NewRecorder()
+	handler.ServeHTTP(listPermissionsResp, listPermissionsReq)
+	if listPermissionsResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", listPermissionsResp.Code, listPermissionsResp.Body.String())
+	}
+	if !strings.Contains(listPermissionsResp.Body.String(), "users-list") {
+		t.Fatalf("expected swagger-derived permissions in response")
+	}
+
+	createRoleReq := authorizedJSONRequest(
+		http.MethodPost,
+		"/api/v1/roles",
+		tenantAdminSession,
+		`{"code":"auditor","name":"Auditor","permissionIds":["users-list"]}`,
+	)
+	createRoleResp := httptest.NewRecorder()
+	handler.ServeHTTP(createRoleResp, createRoleReq)
+	if createRoleResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", createRoleResp.Code, createRoleResp.Body.String())
+	}
+
+	var rolePayload struct {
+		Success bool    `json:"success"`
+		Data    vo.Role `json:"data"`
+	}
+	if err := json.Unmarshal(createRoleResp.Body.Bytes(), &rolePayload); err != nil {
+		t.Fatalf("failed to parse role response: %v", err)
+	}
+	if rolePayload.Data.Code != "auditor" {
+		t.Fatalf("expected role code auditor")
+	}
+
+	createUserReq := authorizedJSONRequest(
+		http.MethodPost,
+		"/api/v1/users",
+		tenantAdminSession,
+		`{"username":"bob","displayName":"Bob","role":"auditor","status":"active"}`,
+	)
+	createUserResp := httptest.NewRecorder()
+	handler.ServeHTTP(createUserResp, createUserReq)
+	if createUserResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", createUserResp.Code, createUserResp.Body.String())
+	}
+
+	bobSession := loginSession(t, handler, "bob", "bill123;")
+
+	listUsersReq := authorizedJSONRequest(http.MethodGet, "/api/v1/users", bobSession, "")
+	listUsersResp := httptest.NewRecorder()
+	handler.ServeHTTP(listUsersResp, listUsersReq)
+	if listUsersResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", listUsersResp.Code, listUsersResp.Body.String())
+	}
+
+	createUserDeniedReq := authorizedJSONRequest(
+		http.MethodPost,
+		"/api/v1/users",
+		bobSession,
+		`{"username":"eve","displayName":"Eve","role":"user","status":"active"}`,
+	)
+	createUserDeniedResp := httptest.NewRecorder()
+	handler.ServeHTTP(createUserDeniedResp, createUserDeniedReq)
+	if createUserDeniedResp.Code != http.StatusForbidden {
+		t.Fatalf("expected 403, got %d body=%s", createUserDeniedResp.Code, createUserDeniedResp.Body.String())
 	}
 }
 

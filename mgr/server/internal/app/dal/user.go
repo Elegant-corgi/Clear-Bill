@@ -165,3 +165,24 @@ func (d *UserDAL) Delete(ctx context.Context, id uint) error {
 	}
 	return d.DB.WithContext(ctx).Delete(&dbmodel.User{}, id).Error
 }
+
+func (d *UserDAL) CountByRole(ctx context.Context, role string) (int64, error) {
+	if d.DB == nil {
+		d.mu.Lock()
+		defer d.mu.Unlock()
+
+		var count int64
+		for _, user := range d.items {
+			if user.Role == role {
+				count++
+			}
+		}
+		return count, nil
+	}
+
+	var count int64
+	if err := d.DB.WithContext(ctx).Model(&dbmodel.User{}).Where("role = ?", role).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}

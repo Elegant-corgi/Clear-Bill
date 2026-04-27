@@ -15,6 +15,153 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/auth/login": {
+            "post": {
+                "description": "使用用户名和密码登录，设置后台 session",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "用户登录",
+                "operationId": "auth-login",
+                "parameters": [
+                    {
+                        "description": "body参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.LoginReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "description": "清除当前后台 session",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "用户登出",
+                "operationId": "auth-logout",
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "description": "返回当前登录用户信息",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "当前用户信息",
+                "operationId": "auth-me",
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/password": {
+            "put": {
+                "description": "当前登录用户修改自己的密码",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "修改自己的密码",
+                "operationId": "auth-password-change",
+                "parameters": [
+                    {
+                        "description": "body参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ChangeOwnPasswordReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/tokens": {
+            "post": {
+                "description": "为当前已登录用户签发一个用于外部 API 调用的 token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "创建 API token",
+                "operationId": "auth-token-create",
+                "parameters": [
+                    {
+                        "description": "body参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.CreateAPITokenReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/bills": {
             "get": {
                 "description": "返回账单列表数据",
@@ -99,6 +246,27 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/permissions": {
+            "get": {
+                "description": "返回基于 Swagger 接口注解生成的权限列表",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "role"
+                ],
+                "summary": "查询权限列表",
+                "operationId": "permissions-list",
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/reconciliations": {
             "get": {
                 "description": "返回对账任务列表数据",
@@ -110,6 +278,220 @@ const docTemplate = `{
                 ],
                 "summary": "查询对账任务列表",
                 "operationId": "reconciliations-list",
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/roles": {
+            "get": {
+                "description": "查询可见范围内的角色列表",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "role"
+                ],
+                "summary": "查询角色列表",
+                "operationId": "roles-list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "关键字",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "角色作用域",
+                        "name": "scope",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "创建角色并分配权限",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "role"
+                ],
+                "summary": "创建角色",
+                "operationId": "roles-create",
+                "parameters": [
+                    {
+                        "description": "body参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.CreateRoleReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/roles/{id}": {
+            "get": {
+                "description": "查询指定角色信息",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "role"
+                ],
+                "summary": "查询角色详情",
+                "operationId": "roles-get",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "角色ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "更新指定角色的基础信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "role"
+                ],
+                "summary": "更新角色",
+                "operationId": "roles-update",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "角色ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.UpdateRoleReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "删除指定角色",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "role"
+                ],
+                "summary": "删除角色",
+                "operationId": "roles-delete",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "角色ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/roles/{id}/permissions": {
+            "put": {
+                "description": "覆盖指定角色的权限列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "role"
+                ],
+                "summary": "更新角色权限",
+                "operationId": "roles-permissions-update",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "角色ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.UpdateRolePermissionsReq"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "执行成功",
@@ -309,9 +691,277 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/users": {
+            "get": {
+                "description": "超管可查询所有用户，租户管理员仅可查询本租户用户",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "查询用户列表",
+                "operationId": "users-list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "关键字",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "仅超管和租户管理员可创建用户，默认密码为 bill123;",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "创建用户",
+                "operationId": "users-create",
+                "parameters": [
+                    {
+                        "description": "body参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.CreateUserReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{id}": {
+            "get": {
+                "description": "查询指定用户详情",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "查询用户详情",
+                "operationId": "users-get",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "更新指定用户信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "更新用户",
+                "operationId": "users-update",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.UpdateUserReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "删除指定用户",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "删除用户",
+                "operationId": "users-delete",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{id}/password": {
+            "put": {
+                "description": "超管可修改所有用户密码，租户管理员可修改本租户所有用户密码",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "重置用户密码",
+                "operationId": "users-password-reset",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResetPasswordReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "clearbill_mgr_server_api_vo.ChangeOwnPasswordReq": {
+            "type": "object",
+            "required": [
+                "newPassword",
+                "oldPassword"
+            ],
+            "properties": {
+                "newPassword": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "minLength": 6
+                },
+                "oldPassword": {
+                    "type": "string",
+                    "maxLength": 128
+                }
+            }
+        },
+        "clearbill_mgr_server_api_vo.CreateAPITokenReq": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "maxLength": 128
+                }
+            }
+        },
+        "clearbill_mgr_server_api_vo.CreateRoleReq": {
+            "type": "object",
+            "required": [
+                "code",
+                "name"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "maxLength": 64
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 128
+                },
+                "permissionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "scope": {
+                    "type": "string",
+                    "maxLength": 16
+                },
+                "tenantId": {
+                    "type": "integer"
+                }
+            }
+        },
         "clearbill_mgr_server_api_vo.CreateTenantReq": {
             "type": "object",
             "required": [
@@ -319,6 +969,14 @@ const docTemplate = `{
                 "name"
             ],
             "properties": {
+                "adminDisplayName": {
+                    "type": "string",
+                    "maxLength": 128
+                },
+                "adminUsername": {
+                    "type": "string",
+                    "maxLength": 64
+                },
                 "code": {
                     "type": "string",
                     "maxLength": 64
@@ -345,6 +1003,65 @@ const docTemplate = `{
                 }
             }
         },
+        "clearbill_mgr_server_api_vo.CreateUserReq": {
+            "type": "object",
+            "required": [
+                "displayName",
+                "role",
+                "username"
+            ],
+            "properties": {
+                "displayName": {
+                    "type": "string",
+                    "maxLength": 128
+                },
+                "role": {
+                    "type": "string",
+                    "maxLength": 64
+                },
+                "status": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "tenantId": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 64
+                }
+            }
+        },
+        "clearbill_mgr_server_api_vo.LoginReq": {
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "maxLength": 128
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 64
+                }
+            }
+        },
+        "clearbill_mgr_server_api_vo.ResetPasswordReq": {
+            "type": "object",
+            "required": [
+                "newPassword"
+            ],
+            "properties": {
+                "newPassword": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "minLength": 6
+                }
+            }
+        },
         "clearbill_mgr_server_api_vo.ResponseResult": {
             "type": "object",
             "properties": {
@@ -354,6 +1071,29 @@ const docTemplate = `{
                 },
                 "success": {
                     "type": "boolean"
+                }
+            }
+        },
+        "clearbill_mgr_server_api_vo.UpdateRolePermissionsReq": {
+            "type": "object",
+            "properties": {
+                "permissionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "clearbill_mgr_server_api_vo.UpdateRoleReq": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "maxLength": 128
                 }
             }
         },
@@ -387,6 +1127,30 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "maxLength": 32
+                }
+            }
+        },
+        "clearbill_mgr_server_api_vo.UpdateUserReq": {
+            "type": "object",
+            "required": [
+                "displayName",
+                "role"
+            ],
+            "properties": {
+                "displayName": {
+                    "type": "string",
+                    "maxLength": 128
+                },
+                "role": {
+                    "type": "string",
+                    "maxLength": 64
+                },
+                "status": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "tenantId": {
+                    "type": "integer"
                 }
             }
         }

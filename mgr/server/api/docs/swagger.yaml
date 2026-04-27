@@ -1,7 +1,55 @@
 basePath: /api/v1
 definitions:
+  clearbill_mgr_server_api_vo.ChangeOwnPasswordReq:
+    properties:
+      newPassword:
+        maxLength: 128
+        minLength: 6
+        type: string
+      oldPassword:
+        maxLength: 128
+        type: string
+    required:
+    - newPassword
+    - oldPassword
+    type: object
+  clearbill_mgr_server_api_vo.CreateAPITokenReq:
+    properties:
+      name:
+        maxLength: 128
+        type: string
+    required:
+    - name
+    type: object
+  clearbill_mgr_server_api_vo.CreateRoleReq:
+    properties:
+      code:
+        maxLength: 64
+        type: string
+      name:
+        maxLength: 128
+        type: string
+      permissionIds:
+        items:
+          type: string
+        type: array
+      scope:
+        maxLength: 16
+        type: string
+      tenantId:
+        type: integer
+    required:
+    - code
+    - name
+    type: object
   clearbill_mgr_server_api_vo.CreateTenantReq:
     properties:
+      adminDisplayName:
+        maxLength: 128
+        type: string
+      adminUsername:
+        maxLength: 64
+        type: string
       code:
         maxLength: 64
         type: string
@@ -24,6 +72,48 @@ definitions:
     - code
     - name
     type: object
+  clearbill_mgr_server_api_vo.CreateUserReq:
+    properties:
+      displayName:
+        maxLength: 128
+        type: string
+      role:
+        maxLength: 64
+        type: string
+      status:
+        maxLength: 32
+        type: string
+      tenantId:
+        type: integer
+      username:
+        maxLength: 64
+        type: string
+    required:
+    - displayName
+    - role
+    - username
+    type: object
+  clearbill_mgr_server_api_vo.LoginReq:
+    properties:
+      password:
+        maxLength: 128
+        type: string
+      username:
+        maxLength: 64
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  clearbill_mgr_server_api_vo.ResetPasswordReq:
+    properties:
+      newPassword:
+        maxLength: 128
+        minLength: 6
+        type: string
+    required:
+    - newPassword
+    type: object
   clearbill_mgr_server_api_vo.ResponseResult:
     properties:
       data: {}
@@ -31,6 +121,21 @@ definitions:
         type: string
       success:
         type: boolean
+    type: object
+  clearbill_mgr_server_api_vo.UpdateRolePermissionsReq:
+    properties:
+      permissionIds:
+        items:
+          type: string
+        type: array
+    type: object
+  clearbill_mgr_server_api_vo.UpdateRoleReq:
+    properties:
+      name:
+        maxLength: 128
+        type: string
+    required:
+    - name
     type: object
   clearbill_mgr_server_api_vo.UpdateTenantReq:
     properties:
@@ -56,12 +161,126 @@ definitions:
     - code
     - name
     type: object
+  clearbill_mgr_server_api_vo.UpdateUserReq:
+    properties:
+      displayName:
+        maxLength: 128
+        type: string
+      role:
+        maxLength: 64
+        type: string
+      status:
+        maxLength: 32
+        type: string
+      tenantId:
+        type: integer
+    required:
+    - displayName
+    - role
+    type: object
 info:
   contact: {}
   description: Clear Bill backend service API.
   title: Clear Bill API
   version: 0.1.0
 paths:
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: 使用用户名和密码登录，设置后台 session
+      operationId: auth-login
+      parameters:
+      - description: body参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/clearbill_mgr_server_api_vo.LoginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 用户登录
+      tags:
+      - auth
+  /api/v1/auth/logout:
+    post:
+      description: 清除当前后台 session
+      operationId: auth-logout
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 用户登出
+      tags:
+      - auth
+  /api/v1/auth/me:
+    get:
+      description: 返回当前登录用户信息
+      operationId: auth-me
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 当前用户信息
+      tags:
+      - auth
+  /api/v1/auth/password:
+    put:
+      consumes:
+      - application/json
+      description: 当前登录用户修改自己的密码
+      operationId: auth-password-change
+      parameters:
+      - description: body参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/clearbill_mgr_server_api_vo.ChangeOwnPasswordReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 修改自己的密码
+      tags:
+      - auth
+  /api/v1/auth/tokens:
+    post:
+      consumes:
+      - application/json
+      description: 为当前已登录用户签发一个用于外部 API 调用的 token
+      operationId: auth-token-create
+      parameters:
+      - description: body参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/clearbill_mgr_server_api_vo.CreateAPITokenReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 创建 API token
+      tags:
+      - auth
   /api/v1/bills:
     get:
       description: 返回账单列表数据
@@ -118,6 +337,20 @@ paths:
       summary: 健康检查
       tags:
       - system
+  /api/v1/permissions:
+    get:
+      description: 返回基于 Swagger 接口注解生成的权限列表
+      operationId: permissions-list
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 查询权限列表
+      tags:
+      - role
   /api/v1/reconciliations:
     get:
       description: 返回对账任务列表数据
@@ -132,6 +365,149 @@ paths:
       summary: 查询对账任务列表
       tags:
       - billing
+  /api/v1/roles:
+    get:
+      description: 查询可见范围内的角色列表
+      operationId: roles-list
+      parameters:
+      - description: 关键字
+        in: query
+        name: keyword
+        type: string
+      - description: 角色作用域
+        in: query
+        name: scope
+        type: string
+      - description: 租户ID
+        in: query
+        name: tenantId
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 查询角色列表
+      tags:
+      - role
+    post:
+      consumes:
+      - application/json
+      description: 创建角色并分配权限
+      operationId: roles-create
+      parameters:
+      - description: body参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/clearbill_mgr_server_api_vo.CreateRoleReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 创建角色
+      tags:
+      - role
+  /api/v1/roles/{id}:
+    delete:
+      description: 删除指定角色
+      operationId: roles-delete
+      parameters:
+      - description: 角色ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 删除角色
+      tags:
+      - role
+    get:
+      description: 查询指定角色信息
+      operationId: roles-get
+      parameters:
+      - description: 角色ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 查询角色详情
+      tags:
+      - role
+    put:
+      consumes:
+      - application/json
+      description: 更新指定角色的基础信息
+      operationId: roles-update
+      parameters:
+      - description: 角色ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: body参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/clearbill_mgr_server_api_vo.UpdateRoleReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 更新角色
+      tags:
+      - role
+  /api/v1/roles/{id}/permissions:
+    put:
+      consumes:
+      - application/json
+      description: 覆盖指定角色的权限列表
+      operationId: roles-permissions-update
+      parameters:
+      - description: 角色ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: body参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/clearbill_mgr_server_api_vo.UpdateRolePermissionsReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 更新角色权限
+      tags:
+      - role
   /api/v1/tenants:
     get:
       description: 根据关键字查询租户列表
@@ -259,4 +635,143 @@ paths:
       summary: 更新租户
       tags:
       - tenant
+  /api/v1/users:
+    get:
+      description: 超管可查询所有用户，租户管理员仅可查询本租户用户
+      operationId: users-list
+      parameters:
+      - description: 关键字
+        in: query
+        name: keyword
+        type: string
+      - description: 租户ID
+        in: query
+        name: tenantId
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 查询用户列表
+      tags:
+      - user
+    post:
+      consumes:
+      - application/json
+      description: 仅超管和租户管理员可创建用户，默认密码为 bill123;
+      operationId: users-create
+      parameters:
+      - description: body参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/clearbill_mgr_server_api_vo.CreateUserReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 创建用户
+      tags:
+      - user
+  /api/v1/users/{id}:
+    delete:
+      description: 删除指定用户
+      operationId: users-delete
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 删除用户
+      tags:
+      - user
+    get:
+      description: 查询指定用户详情
+      operationId: users-get
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 查询用户详情
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      description: 更新指定用户信息
+      operationId: users-update
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: body参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/clearbill_mgr_server_api_vo.UpdateUserReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 更新用户
+      tags:
+      - user
+  /api/v1/users/{id}/password:
+    put:
+      consumes:
+      - application/json
+      description: 超管可修改所有用户密码，租户管理员可修改本租户所有用户密码
+      operationId: users-password-reset
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: body参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/clearbill_mgr_server_api_vo.ResetPasswordReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 重置用户密码
+      tags:
+      - user
 swagger: "2.0"

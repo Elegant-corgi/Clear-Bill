@@ -7,6 +7,8 @@ var DalSet = wire.NewSet(
 	NewBillingDAL,
 	NewTenantDAL,
 	NewUserDAL,
+	NewRoleDAL,
+	NewRolePermissionDAL,
 	NewSessionDAL,
 	NewAPITokenDAL,
 )

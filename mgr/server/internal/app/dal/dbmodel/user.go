@@ -11,6 +11,8 @@ const (
 	RoleSysadmin        = "sysadmin"
 	RoleTenantAdmin     = "tenant_admin"
 	RoleUser            = "user"
+	RoleScopeSystem     = "system"
+	RoleScopeTenant     = "tenant"
 	StatusActive        = "active"
 	StatusDisabled      = "disabled"
 )
