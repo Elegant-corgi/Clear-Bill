@@ -1,5 +1,5 @@
 const defaultSettings = {
-  title: "Clear Bill",
+  title: "账单计费系统",
   subtitle: "Revenue ops cockpit",
   description: "A billing workspace for receivable visibility and reconciliation flow.",
   heroTitle: "Clear the billing runway before close week lands.",
