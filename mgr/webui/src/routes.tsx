@@ -12,6 +12,7 @@ import { createBrowserRouter } from "react-router-dom";
 import { AppShell } from "@/layouts/AppShell";
 import { BillsPage } from "@/pages/Bills";
 import { CustomersPage } from "@/pages/Customers";
+import { LoginPage } from "@/pages/Login";
 import { NotFoundPage } from "@/pages/NotFound";
 import { OverviewPage } from "@/pages/Overview";
 import { ReconciliationPage } from "@/pages/Reconciliation";
@@ -26,7 +27,7 @@ export interface NavigationItem {
 
 export const navigationItems: NavigationItem[] = [
   {
-    path: "/",
+    path: "/overview",
     label: "Overview",
     subtitle: "Billing command surface",
     icon: <RadarChartOutlined />,
@@ -60,11 +61,19 @@ export const navigationItems: NavigationItem[] = [
 export const router = createBrowserRouter([
   {
     path: "/",
+    element: <LoginPage />,
+    errorElement: <NotFoundPage />,
+  },
+  {
+    path: "/login",
+    element: <LoginPage />,
+  },
+  {
     element: <AppShell />,
     errorElement: <NotFoundPage />,
     children: [
       {
-        index: true,
+        path: "overview",
         element: <OverviewPage />,
       },
       {
