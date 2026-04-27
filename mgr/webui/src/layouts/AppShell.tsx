@@ -5,28 +5,47 @@ import {
   DoubleRightOutlined,
   DownOutlined,
   FileDoneOutlined,
+  HomeOutlined,
   MenuOutlined,
+  TeamOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import { App, Button, Drawer, Dropdown, Grid, Layout } from "antd";
 import type { MenuProps } from "antd";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import defaultSettings from "@config/defaultSettings";
-import {
-  homeNavigationItem,
-  navigationGroups,
-  navigationItems,
-} from "@/routes";
 
 const { Content, Header, Sider } = Layout;
 
+const OVERVIEW_PATH = "/overview";
+const TENANT_LIST_PATH = "/tenants/list";
+const USER_LIST_PATH = "/tenants/users";
+
 function getSelectedPath(pathname: string) {
-  const current = navigationItems.find((item) => pathname.startsWith(item.path));
-  return current?.path ?? "/overview";
+  if (pathname.startsWith(TENANT_LIST_PATH)) {
+    return TENANT_LIST_PATH;
+  }
+
+  if (pathname.startsWith(USER_LIST_PATH)) {
+    return USER_LIST_PATH;
+  }
+
+  return OVERVIEW_PATH;
 }
 
 function getCurrentTitle(pathname: string) {
-  return navigationItems.find((item) => item.path === getSelectedPath(pathname))?.label ?? "首页";
+  const selectedPath = getSelectedPath(pathname);
+
+  if (selectedPath === TENANT_LIST_PATH) {
+    return "租户列表";
+  }
+
+  if (selectedPath === USER_LIST_PATH) {
+    return "用户列表";
+  }
+
+  return "首页";
 }
 
 function UserAvatar() {
@@ -42,20 +61,20 @@ function UserAvatar() {
 
 interface SidebarProps {
   collapsed: boolean;
-  collapsedGroups: string[];
+  tenantMenuCollapsed: boolean;
   selectedPath: string;
   onNavigate: (path: string) => void;
   onToggleCollapse: () => void;
-  onToggleGroup: (title: string) => void;
+  onToggleTenantMenu: () => void;
 }
 
 function Sidebar({
   collapsed,
-  collapsedGroups,
+  tenantMenuCollapsed,
   selectedPath,
   onNavigate,
   onToggleCollapse,
-  onToggleGroup,
+  onToggleTenantMenu,
 }: SidebarProps) {
   return (
     <div className={`shell__sidebar-inner ${collapsed ? "is-collapsed" : ""}`}>
@@ -68,50 +87,53 @@ function Sidebar({
 
       <nav className="shell__menu" aria-label="后台导航">
         <button
-          className={`shell__menu-item ${selectedPath === homeNavigationItem.path ? "is-active" : ""}`}
+          className={`shell__menu-item ${selectedPath === OVERVIEW_PATH ? "is-active" : ""}`}
           type="button"
-          title={collapsed ? homeNavigationItem.label : undefined}
-          onClick={() => onNavigate(homeNavigationItem.path)}
+          title={collapsed ? "首页" : undefined}
+          onClick={() => onNavigate(OVERVIEW_PATH)}
         >
-          <span className="shell__menu-icon">{homeNavigationItem.icon}</span>
-          {!collapsed ? <span className="shell__menu-label">{homeNavigationItem.label}</span> : null}
+          <span className="shell__menu-icon">
+            <HomeOutlined />
+          </span>
+          {!collapsed ? <span className="shell__menu-label">首页</span> : null}
         </button>
 
-        {navigationGroups.map((group) => {
-          const groupCollapsed = collapsedGroups.includes(group.title);
+        <section className="shell__menu-group">
+          {!collapsed ? (
+            <button className="shell__menu-group-title" type="button" onClick={onToggleTenantMenu}>
+              <span>租户管理</span>
+              <DownOutlined className={tenantMenuCollapsed ? "is-folded" : ""} />
+            </button>
+          ) : null}
 
-          return (
-            <section className="shell__menu-group" key={group.title}>
-              {!collapsed ? (
-                <button
-                  className="shell__menu-group-title"
-                  type="button"
-                  onClick={() => onToggleGroup(group.title)}
-                >
-                  <span>{group.title}</span>
-                  <DownOutlined className={groupCollapsed ? "is-folded" : ""} />
-                </button>
-              ) : null}
+          {!tenantMenuCollapsed || collapsed ? (
+            <div className="shell__menu-list">
+              <button
+                className={`shell__menu-item ${selectedPath === TENANT_LIST_PATH ? "is-active" : ""}`}
+                type="button"
+                title={collapsed ? "租户列表" : undefined}
+                onClick={() => onNavigate(TENANT_LIST_PATH)}
+              >
+                <span className="shell__menu-icon">
+                  <TeamOutlined />
+                </span>
+                {!collapsed ? <span className="shell__menu-label">租户列表</span> : null}
+              </button>
 
-              {!groupCollapsed || collapsed ? (
-                <div className="shell__menu-list">
-                  {group.items.map((item) => (
-                    <button
-                      className={`shell__menu-item ${selectedPath === item.path ? "is-active" : ""}`}
-                      key={item.path}
-                      type="button"
-                      title={collapsed ? item.label : undefined}
-                      onClick={() => onNavigate(item.path)}
-                    >
-                      <span className="shell__menu-icon">{item.icon}</span>
-                      {!collapsed ? <span className="shell__menu-label">{item.label}</span> : null}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </section>
-          );
-        })}
+              <button
+                className={`shell__menu-item ${selectedPath === USER_LIST_PATH ? "is-active" : ""}`}
+                type="button"
+                title={collapsed ? "用户列表" : undefined}
+                onClick={() => onNavigate(USER_LIST_PATH)}
+              >
+                <span className="shell__menu-icon">
+                  <UserOutlined />
+                </span>
+                {!collapsed ? <span className="shell__menu-label">用户列表</span> : null}
+              </button>
+            </div>
+          ) : null}
+        </section>
       </nav>
 
       <button className="shell__collapse" type="button" onClick={onToggleCollapse}>
@@ -129,7 +151,7 @@ export function AppShell() {
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [siderCollapsed, setSiderCollapsed] = useState(false);
-  const [collapsedGroups, setCollapsedGroups] = useState<string[]>([]);
+  const [tenantMenuCollapsed, setTenantMenuCollapsed] = useState(false);
 
   const selectedPath = getSelectedPath(location.pathname);
   const currentTitle = getCurrentTitle(location.pathname);
@@ -137,12 +159,6 @@ export function AppShell() {
   const handleNavigate = (path: string) => {
     navigate(path);
     setDrawerOpen(false);
-  };
-
-  const handleToggleGroup = (title: string) => {
-    setCollapsedGroups((prev) =>
-      prev.includes(title) ? prev.filter((item) => item !== title) : [...prev, title],
-    );
   };
 
   const accountMenuItems: MenuProps["items"] = [
@@ -166,24 +182,24 @@ export function AppShell() {
     () => (
       <Sidebar
         collapsed={siderCollapsed}
-        collapsedGroups={collapsedGroups}
+        tenantMenuCollapsed={tenantMenuCollapsed}
         selectedPath={selectedPath}
         onNavigate={handleNavigate}
         onToggleCollapse={() => setSiderCollapsed((value) => !value)}
-        onToggleGroup={handleToggleGroup}
+        onToggleTenantMenu={() => setTenantMenuCollapsed((value) => !value)}
       />
     ),
-    [collapsedGroups, selectedPath, siderCollapsed],
+    [selectedPath, siderCollapsed, tenantMenuCollapsed],
   );
 
   const drawerSidebar = (
     <Sidebar
       collapsed={false}
-      collapsedGroups={collapsedGroups}
+      tenantMenuCollapsed={tenantMenuCollapsed}
       selectedPath={selectedPath}
       onNavigate={handleNavigate}
       onToggleCollapse={() => setDrawerOpen(false)}
-      onToggleGroup={handleToggleGroup}
+      onToggleTenantMenu={() => setTenantMenuCollapsed((value) => !value)}
     />
   );
 

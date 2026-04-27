@@ -15,6 +15,8 @@ const features = [
   { title: "智能分析", desc: ["多维数据分析", "助力业务决策"], tone: "blue", icon: "layers" },
 ] as const;
 
+type FeatureIconType = (typeof features)[number]["icon"];
+
 function AppMark() {
   return (
     <span className={styles.appMark} aria-hidden="true">
@@ -37,7 +39,7 @@ function AppMark() {
   );
 }
 
-function FeatureIcon({ icon }: { icon: (typeof features)[number]["icon"] }) {
+function FeatureIcon({ icon }: { icon: FeatureIconType }) {
   if (icon === "shield") {
     return (
       <svg viewBox="0 0 56 56">
