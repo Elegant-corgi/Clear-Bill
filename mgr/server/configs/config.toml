@@ -21,11 +21,11 @@ ServeTimeout = 5
 ShutdownTimeout = 5
 
 [GORM]
-Host = "127.0.0.1"
-Port = 3306
+Host = "10.111.201.1"
+Port = 5860
 Database = "clear_bill"
 User = "root"
-Password = "root"
+Password = "stor123;"
 Charset = "utf8mb4"
 ParseTime = true
 Loc = "Local"

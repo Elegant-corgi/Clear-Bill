@@ -5,9 +5,26 @@ import (
 	"time"
 
 	"clearbill/mgr/server/internal/app/config"
+	"clearbill/mgr/server/internal/app/dal/dbmodel"
+	"github.com/google/wire"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
+
+var DBSet = wire.NewSet(InitDBClient)
+
+func InitDBClient(cfg config.Config) (*gorm.DB, error) {
+	db, err := NewMySQL(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.AutoMigrate(&dbmodel.Tenant{}); err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
 
 func NewMySQL(cfg config.Config) (*gorm.DB, error) {
 	dsn := fmt.Sprintf(

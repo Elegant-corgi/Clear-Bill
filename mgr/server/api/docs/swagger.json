@@ -1,0 +1,387 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Clear Bill backend service API.",
+        "title": "Clear Bill API",
+        "contact": {},
+        "version": "0.1.0"
+    },
+    "basePath": "/api/v1",
+    "paths": {
+        "/api/v1/bills": {
+            "get": {
+                "description": "返回账单列表数据",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "billing"
+                ],
+                "summary": "查询账单列表",
+                "operationId": "bills-list",
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/customers": {
+            "get": {
+                "description": "返回客户列表数据",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "billing"
+                ],
+                "summary": "查询客户列表",
+                "operationId": "customers-list",
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/dashboard/summary": {
+            "get": {
+                "description": "返回账单工作台概览数据",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "billing"
+                ],
+                "summary": "查询仪表盘概览",
+                "operationId": "dashboard-summary-get",
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/health": {
+            "get": {
+                "description": "返回服务健康状态与版本信息",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "健康检查",
+                "operationId": "health-get",
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/reconciliations": {
+            "get": {
+                "description": "返回对账任务列表数据",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "billing"
+                ],
+                "summary": "查询对账任务列表",
+                "operationId": "reconciliations-list",
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants": {
+            "get": {
+                "description": "根据关键字查询租户列表",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tenant"
+                ],
+                "summary": "查询租户列表",
+                "operationId": "tenants-list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "关键字",
+                        "name": "keyword",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "创建一条新的租户记录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tenant"
+                ],
+                "summary": "创建租户",
+                "operationId": "tenants-create",
+                "parameters": [
+                    {
+                        "description": "body参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.CreateTenantReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{id}": {
+            "get": {
+                "description": "根据租户ID查询租户详情",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tenant"
+                ],
+                "summary": "查询租户详情",
+                "operationId": "tenants-get",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "租户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    },
+                    "404": {
+                        "description": "租户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "根据租户ID更新租户信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tenant"
+                ],
+                "summary": "更新租户",
+                "operationId": "tenants-update",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "租户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.UpdateTenantReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    },
+                    "404": {
+                        "description": "租户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "根据租户ID删除租户",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tenant"
+                ],
+                "summary": "删除租户",
+                "operationId": "tenants-delete",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "租户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    },
+                    "404": {
+                        "description": "租户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "clearbill_mgr_server_api_vo.CreateTenantReq": {
+            "type": "object",
+            "required": [
+                "code",
+                "name"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "maxLength": 64
+                },
+                "contactName": {
+                    "type": "string",
+                    "maxLength": 64
+                },
+                "contactPhone": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 128
+                },
+                "remark": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "status": {
+                    "type": "string",
+                    "maxLength": 32
+                }
+            }
+        },
+        "clearbill_mgr_server_api_vo.ResponseResult": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "error": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "clearbill_mgr_server_api_vo.UpdateTenantReq": {
+            "type": "object",
+            "required": [
+                "code",
+                "name"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "maxLength": 64
+                },
+                "contactName": {
+                    "type": "string",
+                    "maxLength": 64
+                },
+                "contactPhone": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 128
+                },
+                "remark": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "status": {
+                    "type": "string",
+                    "maxLength": 32
+                }
+            }
+        }
+    }
+}
