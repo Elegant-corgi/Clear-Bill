@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
+import proxy from "./config/proxy";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
@@ -21,17 +23,13 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@config": path.resolve(__dirname, "./config"),
     },
   },
   server: {
     host: "0.0.0.0",
     port: 5173,
-    proxy: {
-      "/api": {
-        target: "http://127.0.0.1:8080",
-        changeOrigin: true,
-      },
-    },
+    proxy,
   },
   preview: {
     host: "0.0.0.0",

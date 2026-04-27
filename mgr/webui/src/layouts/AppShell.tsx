@@ -21,6 +21,7 @@ import {
 import type { MenuProps } from "antd";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
+import defaultSettings from "@config/defaultSettings";
 import { navigationItems } from "@/routes";
 
 const { Content, Header, Sider } = Layout;
@@ -41,7 +42,7 @@ function getSelectedPath(pathname: string) {
 function getBreadcrumbItems(pathname: string) {
   const current = navigationItems.find((item) => item.path === getSelectedPath(pathname));
   return [
-    { title: "Clear Bill" },
+    { title: defaultSettings.title },
     { title: current?.label ?? "Workspace" },
   ];
 }
@@ -72,15 +73,15 @@ export function AppShell() {
           <span className="shell__logo-mark">CB</span>
           <div className="shell__logo-text">
             <Typography.Title level={4} className="shell__logo-title">
-              Clear Bill
+              {defaultSettings.title}
             </Typography.Title>
             <Typography.Text className="shell__logo-subtitle">
-              Revenue ops cockpit
+              {defaultSettings.subtitle}
             </Typography.Text>
           </div>
         </div>
         <Typography.Paragraph className="shell__logo-subtitle">
-          Same placement as the reference repository, rebuilt for an Ant Design 6 workflow.
+          {defaultSettings.description}
         </Typography.Paragraph>
       </div>
 
@@ -130,10 +131,10 @@ export function AppShell() {
             <div className="shell__hero">
               <Breadcrumb items={getBreadcrumbItems(location.pathname)} />
               <Typography.Title level={3} className="shell__title">
-                Clear the billing runway before close week lands.
+                {defaultSettings.heroTitle}
               </Typography.Title>
               <Typography.Text type="secondary">
-                Purpose-built around a faster, cleaner finance operations loop.
+                {defaultSettings.heroDescription}
               </Typography.Text>
             </div>
           </Space>
