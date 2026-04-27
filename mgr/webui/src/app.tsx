@@ -10,12 +10,12 @@ const appTheme: ThemeConfig = {
   token: {
     colorPrimary: defaultSettings.primaryColor,
     colorInfo: defaultSettings.primaryColor,
-    colorSuccess: "#0f8b8d",
-    colorWarning: "#d97706",
-    colorError: "#dc2626",
-    borderRadius: 22,
-    colorBgBase: "#f7f7f2",
-    colorTextBase: "#132238",
+    colorSuccess: "#20c787",
+    colorWarning: "#ffb545",
+    colorError: "#ff4d4f",
+    borderRadius: 8,
+    colorBgBase: "#f5f7fb",
+    colorTextBase: "#17233d",
     fontFamily: '"Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif',
   },
 };

@@ -1,62 +1,81 @@
 import type { ReactNode } from "react";
 
 import {
+  AppstoreOutlined,
   AuditOutlined,
-  DollarCircleOutlined,
-  RadarChartOutlined,
+  FileTextOutlined,
+  HomeOutlined,
+  KeyOutlined,
+  SafetyCertificateOutlined,
   SettingOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { AppShell } from "@/layouts/AppShell";
-import { BillsPage } from "@/pages/Bills";
-import { CustomersPage } from "@/pages/Customers";
 import { LoginPage } from "@/pages/Login";
 import { NotFoundPage } from "@/pages/NotFound";
 import { OverviewPage } from "@/pages/Overview";
-import { ReconciliationPage } from "@/pages/Reconciliation";
-import { SettingsPage } from "@/pages/Settings";
 
 export interface NavigationItem {
   path: string;
   label: string;
-  subtitle: string;
   icon: ReactNode;
 }
 
-export const navigationItems: NavigationItem[] = [
+export interface NavigationGroup {
+  title: string;
+  items: NavigationItem[];
+}
+
+export const homeNavigationItem: NavigationItem = {
+  path: "/overview",
+  label: "首页",
+  icon: <HomeOutlined />,
+};
+
+export const navigationGroups: NavigationGroup[] = [
   {
-    path: "/overview",
-    label: "Overview",
-    subtitle: "Billing command surface",
-    icon: <RadarChartOutlined />,
+    title: "租户管理",
+    items: [{ path: "/tenants/list", label: "租户列表", icon: <TeamOutlined /> }],
   },
   {
-    path: "/bills",
-    label: "Bills",
-    subtitle: "Track outgoing statements",
-    icon: <DollarCircleOutlined />,
+    title: "角色与权限",
+    items: [
+      { path: "/permissions/roles", label: "角色管理", icon: <SafetyCertificateOutlined /> },
+      { path: "/permissions/grants", label: "权限分配", icon: <AppstoreOutlined /> },
+    ],
   },
   {
-    path: "/customers",
-    label: "Customers",
-    subtitle: "Keep account health visible",
-    icon: <TeamOutlined />,
+    title: "凭证管理",
+    items: [
+      { path: "/credentials/aksk", label: "AK/SK 管理", icon: <KeyOutlined /> },
+      { path: "/credentials/tokens", label: "Token 管理", icon: <SettingOutlined /> },
+    ],
   },
   {
-    path: "/reconciliation",
-    label: "Reconciliation",
-    subtitle: "Watch settlement drift",
-    icon: <AuditOutlined />,
-  },
-  {
-    path: "/settings",
-    label: "Settings",
-    subtitle: "Workspace defaults",
-    icon: <SettingOutlined />,
+    title: "审计日志",
+    items: [
+      { path: "/audit/logs", label: "操作日志", icon: <FileTextOutlined /> },
+      { path: "/audit/search", label: "日志查询", icon: <AuditOutlined /> },
+    ],
   },
 ];
+
+export const navigationItems: NavigationItem[] = [
+  homeNavigationItem,
+  ...navigationGroups.flatMap((group) => group.items),
+];
+
+function DevelopingPage({ title }: { title: string }) {
+  return (
+    <section className="empty-page">
+      <SettingOutlined />
+      <h2>{title}</h2>
+      <p>开发中</p>
+    </section>
+  );
+}
 
 export const router = createBrowserRouter([
   {
@@ -76,21 +95,15 @@ export const router = createBrowserRouter([
         path: "overview",
         element: <OverviewPage />,
       },
+      ...navigationItems
+        .filter((item) => item.path !== "/overview")
+        .map((item) => ({
+          path: item.path.replace(/^\//, ""),
+          element: <DevelopingPage title={item.label} />,
+        })),
       {
-        path: "bills",
-        element: <BillsPage />,
-      },
-      {
-        path: "customers",
-        element: <CustomersPage />,
-      },
-      {
-        path: "reconciliation",
-        element: <ReconciliationPage />,
-      },
-      {
-        path: "settings",
-        element: <SettingsPage />,
+        path: "",
+        element: <Navigate to="/overview" replace />,
       },
       {
         path: "*",
