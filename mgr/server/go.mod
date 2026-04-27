@@ -4,6 +4,7 @@ go 1.22.0
 
 require (
 	github.com/gin-gonic/gin v1.10.0
+	github.com/google/wire v0.7.0
 	github.com/pelletier/go-toml/v2 v2.2.2
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.12
