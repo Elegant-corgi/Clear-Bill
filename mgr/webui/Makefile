@@ -1,9 +1,18 @@
-.PHONY: all build clean dev dist install lint preview
+.PHONY: all build clean dev dist install lint preview mod wire swagger test
 
 all: build
 
 install:
 	pnpm install
+
+mod: install
+
+wire:
+
+swagger:
+
+test:
+	pnpm lint
 
 dev:
 	pnpm dev

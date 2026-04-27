@@ -1,4 +1,4 @@
-TOPTARGETS := all build clean dist test
+TOPTARGETS := all build clean dist test mod lint wire swagger
 SUBDIRS := server webui
 
 $(TOPTARGETS): $(SUBDIRS)

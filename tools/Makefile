@@ -1,6 +1,16 @@
-.PHONY: all clean dist
+.PHONY: all clean dist mod lint wire swagger test
 
 all: dist
+
+mod:
+
+lint:
+
+wire:
+
+swagger:
+
+test:
 
 dist:
 	mkdir -p dist

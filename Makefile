@@ -1,6 +1,6 @@
 # note: invoke sub-project targets from the repository root
 
-TOPTARGETS := all build clean dist test
+TOPTARGETS := all build clean dist test mod lint wire swagger
 SUBDIRS := mgr scripts tools
 VERSION := $(shell cat VERSION)
 
