@@ -17,6 +17,7 @@ import {
   Typography,
 } from "antd";
 
+import defaultSettings from "@config/defaultSettings";
 import { MetricCard } from "@/components/MetricCard";
 import { getDashboardSummary } from "@/services/clear-bill";
 import type { DashboardSummary } from "@/services/clear-bill";
@@ -51,12 +52,9 @@ export function OverviewPage() {
           <Tag color="cyan">Finance command surface</Tag>
           <Tag color="geekblue">Ant Design 6</Tag>
         </Space>
-        <Typography.Title level={2}>
-          One workspace for import quality, receivable risk, and reconciliation drift.
-        </Typography.Title>
+        <Typography.Title level={2}>{defaultSettings.overviewTitle}</Typography.Title>
         <Typography.Paragraph type="secondary">
-          The structure follows the reference repository while the frontend is modernized for a
-          leaner UI stack and cleaner upgrade path.
+          {defaultSettings.overviewDescription}
         </Typography.Paragraph>
       </section>
 
