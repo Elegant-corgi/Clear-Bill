@@ -4,6 +4,7 @@ const config = {
   app: defaultSettings,
   apiPrefix: "/api/v1",
   proxyPrefix: "/api",
+  apiOrigin: "",
 };
 
 export default config;
