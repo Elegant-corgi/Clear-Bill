@@ -7,5 +7,6 @@ var ActionsSet = wire.NewSet(
 	NewSystemAction,
 	NewBillingAction,
 	NewTenantAction,
+	NewRoleAction,
 	NewUserAction,
 )

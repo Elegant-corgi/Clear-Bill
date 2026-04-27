@@ -43,7 +43,7 @@ type ResetPasswordReq struct {
 type CreateUserReq struct {
 	Username    string `json:"username" binding:"required,max=64"`
 	DisplayName string `json:"displayName" binding:"required,max=128"`
-	Role        string `json:"role" binding:"required,max=32"`
+	Role        string `json:"role" binding:"required,max=64"`
 	TenantID    *uint  `json:"tenantId"`
 	Status      string `json:"status" binding:"max=32"`
 }
@@ -55,7 +55,7 @@ type CreateUserResp struct {
 
 type UpdateUserReq struct {
 	DisplayName string `json:"displayName" binding:"required,max=128"`
-	Role        string `json:"role" binding:"required,max=32"`
+	Role        string `json:"role" binding:"required,max=64"`
 	TenantID    *uint  `json:"tenantId"`
 	Status      string `json:"status" binding:"max=32"`
 }

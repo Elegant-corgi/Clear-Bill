@@ -239,7 +239,7 @@ func writeUserError(c *gin.Context, err error) {
 		ginx.ResError(c, errors.New("user not found"), 404)
 	case strings.Contains(strings.ToLower(err.Error()), "duplicate"):
 		ginx.ResError(c, err, 409)
-	case err.Error() == "permission denied" || err.Error() == "cannot delete current user" || err.Error() == "tenantId is required" || err.Error() == "tenant admin missing tenant scope":
+	case err.Error() == "permission denied" || err.Error() == "cannot delete current user" || err.Error() == "tenantId is required" || err.Error() == "tenant admin missing tenant scope" || err.Error() == "system role cannot bind tenant" || err.Error() == "role tenant scope mismatch":
 		ginx.ResError(c, err, 403)
 	default:
 		ginx.ResError(c, err, 400)

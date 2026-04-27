@@ -7,7 +7,6 @@ import (
 
 	"clearbill/mgr/server/api/vo"
 	"clearbill/mgr/server/internal/app/bll"
-	"clearbill/mgr/server/internal/app/dal/dbmodel"
 	"clearbill/mgr/server/internal/app/ginx"
 	"clearbill/mgr/server/internal/app/middleware"
 	"github.com/gin-gonic/gin"
@@ -16,11 +15,13 @@ import (
 
 type TenantAction struct {
 	TenantService *bll.TenantService
+	RoleService   *bll.RoleService
 }
 
-func NewTenantAction(tenantService *bll.TenantService) *TenantAction {
+func NewTenantAction(tenantService *bll.TenantService, roleService *bll.RoleService) *TenantAction {
 	return &TenantAction{
 		TenantService: tenantService,
+		RoleService:   roleService,
 	}
 }
 
@@ -36,7 +37,7 @@ func NewTenantAction(tenantService *bll.TenantService) *TenantAction {
 // @ID       tenants-create
 // @Tags     tenant
 func (a *TenantAction) CreateTenant(c *gin.Context) {
-	if !requireSysadmin(c) {
+	if !a.requireSystemScope(c) {
 		return
 	}
 
@@ -65,7 +66,7 @@ func (a *TenantAction) CreateTenant(c *gin.Context) {
 // @ID       tenants-list
 // @Tags     tenant
 func (a *TenantAction) ListTenants(c *gin.Context) {
-	if !requireSysadmin(c) {
+	if !a.requireSystemScope(c) {
 		return
 	}
 
@@ -95,7 +96,7 @@ func (a *TenantAction) ListTenants(c *gin.Context) {
 // @ID       tenants-get
 // @Tags     tenant
 func (a *TenantAction) GetTenant(c *gin.Context) {
-	if !requireSysadmin(c) {
+	if !a.requireSystemScope(c) {
 		return
 	}
 
@@ -128,7 +129,7 @@ func (a *TenantAction) GetTenant(c *gin.Context) {
 // @ID       tenants-update
 // @Tags     tenant
 func (a *TenantAction) UpdateTenant(c *gin.Context) {
-	if !requireSysadmin(c) {
+	if !a.requireSystemScope(c) {
 		return
 	}
 
@@ -164,7 +165,7 @@ func (a *TenantAction) UpdateTenant(c *gin.Context) {
 // @ID       tenants-delete
 // @Tags     tenant
 func (a *TenantAction) DeleteTenant(c *gin.Context) {
-	if !requireSysadmin(c) {
+	if !a.requireSystemScope(c) {
 		return
 	}
 
@@ -182,13 +183,18 @@ func (a *TenantAction) DeleteTenant(c *gin.Context) {
 	ginx.ResOK(c)
 }
 
-func requireSysadmin(c *gin.Context) bool {
+func (a *TenantAction) requireSystemScope(c *gin.Context) bool {
 	user := middleware.CurrentUser(c)
 	if user == nil {
 		ginx.ResError(c, errors.New("unauthorized"), 401)
 		return false
 	}
-	if user.Role != dbmodel.RoleSysadmin {
+	ok, err := a.RoleService.IsSystemScoped(c.Request.Context(), user)
+	if err != nil {
+		ginx.ResError(c, err, 403)
+		return false
+	}
+	if !ok {
 		ginx.ResError(c, errors.New("permission denied"), 403)
 		return false
 	}

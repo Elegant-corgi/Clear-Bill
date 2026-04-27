@@ -60,6 +60,34 @@ func APITokenMiddleware(authService *bll.AuthService) gin.HandlerFunc {
 	}
 }
 
+func RBACMiddleware(roleService *bll.RoleService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := CurrentUser(c)
+		if user == nil {
+			c.AbortWithStatusJSON(401, gin.H{"success": false, "error": "unauthorized"})
+			return
+		}
+
+		permission, ok := roleService.ResolvePermissionByRoute(c.Request.Method, c.FullPath())
+		if !ok {
+			c.AbortWithStatusJSON(403, gin.H{"success": false, "error": "permission not registered"})
+			return
+		}
+
+		allowed, err := roleService.HasPermission(c.Request.Context(), user, permission.ID)
+		if err != nil {
+			c.AbortWithStatusJSON(500, gin.H{"success": false, "error": err.Error()})
+			return
+		}
+		if !allowed {
+			c.AbortWithStatusJSON(403, gin.H{"success": false, "error": "permission denied"})
+			return
+		}
+
+		c.Next()
+	}
+}
+
 func CurrentUser(c *gin.Context) *dbmodel.User {
 	value, ok := c.Get(currentUserKey)
 	if !ok {

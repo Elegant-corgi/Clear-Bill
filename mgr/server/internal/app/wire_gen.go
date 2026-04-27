@@ -26,6 +26,11 @@ func BuildInjector(cfg config.Config) (*Injector, error) {
 	sessionDAL := dal.NewSessionDAL(gormDB)
 	apiTokenDAL := dal.NewAPITokenDAL(gormDB)
 	authService := bll.NewAuthService(userDAL, sessionDAL, apiTokenDAL)
+	roleDAL := dal.NewRoleDAL(gormDB)
+	rolePermissionDAL := dal.NewRolePermissionDAL(gormDB)
+	tenantDAL := dal.NewTenantDAL(gormDB)
+	permissionCatalog := bll.NewPermissionCatalog()
+	roleService := bll.NewRoleService(roleDAL, rolePermissionDAL, userDAL, tenantDAL, permissionCatalog)
 	authAction := action.NewAuthAction(authService)
 	systemDAL := dal.NewSystemDAL()
 	systemService := bll.NewSystemService(systemDAL)
@@ -33,33 +38,37 @@ func BuildInjector(cfg config.Config) (*Injector, error) {
 	billingDAL := dal.NewBillingDAL()
 	billingService := bll.NewBillingService(billingDAL)
 	billingAction := action.NewBillingAction(billingService)
-	tenantDAL := dal.NewTenantDAL(gormDB)
 	tenantService := bll.NewTenantService(tenantDAL, userDAL)
-	tenantAction := action.NewTenantAction(tenantService)
-	userService := bll.NewUserService(userDAL, tenantDAL)
+	tenantAction := action.NewTenantAction(tenantService, roleService)
+	roleAction := action.NewRoleAction(roleService)
+	userService := bll.NewUserService(userDAL, tenantDAL, roleService)
 	userAction := action.NewUserAction(userService)
-	router := InitRouter(cfg, authService, authAction, systemAction, billingAction, tenantAction, userAction, engine)
+	router := InitRouter(cfg, authService, roleService, authAction, systemAction, billingAction, tenantAction, roleAction, userAction, engine)
 	injector := &Injector{
-		Config:         cfg,
-		DBClient:       gormDB,
-		Engine:         engine,
-		Router:         router,
-		APITokenDAL:    apiTokenDAL,
-		AuthAction:     authAction,
-		SystemAction:   systemAction,
-		BillingAction:  billingAction,
-		TenantAction:   tenantAction,
-		UserAction:     userAction,
-		AuthService:    authService,
-		SystemService:  systemService,
-		BillingService: billingService,
-		TenantService:  tenantService,
-		UserService:    userService,
-		SystemDAL:      systemDAL,
-		BillingDAL:     billingDAL,
-		TenantDAL:      tenantDAL,
-		UserDAL:        userDAL,
-		SessionDAL:     sessionDAL,
+		Config:            cfg,
+		DBClient:          gormDB,
+		Engine:            engine,
+		Router:            router,
+		APITokenDAL:       apiTokenDAL,
+		AuthAction:        authAction,
+		SystemAction:      systemAction,
+		BillingAction:     billingAction,
+		TenantAction:      tenantAction,
+		RoleAction:        roleAction,
+		UserAction:        userAction,
+		AuthService:       authService,
+		RoleService:       roleService,
+		SystemService:     systemService,
+		BillingService:    billingService,
+		TenantService:     tenantService,
+		UserService:       userService,
+		SystemDAL:         systemDAL,
+		BillingDAL:        billingDAL,
+		TenantDAL:         tenantDAL,
+		RoleDAL:           roleDAL,
+		RolePermissionDAL: rolePermissionDAL,
+		UserDAL:           userDAL,
+		SessionDAL:        sessionDAL,
 	}
 	return injector, nil
 }

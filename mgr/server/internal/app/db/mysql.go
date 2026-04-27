@@ -21,7 +21,17 @@ func InitDBClient(cfg config.Config) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	if err := db.AutoMigrate(&dbmodel.Tenant{}, &dbmodel.User{}, &dbmodel.UserSession{}, &dbmodel.UserAPIToken{}); err != nil {
+	if err := db.AutoMigrate(
+		&dbmodel.Tenant{},
+		&dbmodel.Role{},
+		&dbmodel.RolePermission{},
+		&dbmodel.User{},
+		&dbmodel.UserSession{},
+		&dbmodel.UserAPIToken{},
+	); err != nil {
+		return nil, err
+	}
+	if err := SeedDefaultRoles(db); err != nil {
 		return nil, err
 	}
 	if err := SeedDefaultUsers(db); err != nil {
@@ -29,6 +39,44 @@ func InitDBClient(cfg config.Config) (*gorm.DB, error) {
 	}
 
 	return db, nil
+}
+
+func SeedDefaultRoles(db *gorm.DB) error {
+	for _, item := range []dbmodel.Role{
+		{
+			Code:    dbmodel.RoleSysadmin,
+			Name:    "System Administrator",
+			Scope:   dbmodel.RoleScopeSystem,
+			Builtin: true,
+		},
+		{
+			Code:    dbmodel.RoleTenantAdmin,
+			Name:    "Tenant Administrator",
+			Scope:   dbmodel.RoleScopeTenant,
+			Builtin: true,
+		},
+		{
+			Code:    dbmodel.RoleUser,
+			Name:    "User",
+			Scope:   dbmodel.RoleScopeTenant,
+			Builtin: true,
+		},
+	} {
+		var count int64
+		if err := db.WithContext(context.Background()).
+			Model(&dbmodel.Role{}).
+			Where("code = ?", item.Code).
+			Count(&count).Error; err != nil {
+			return err
+		}
+		if count > 0 {
+			continue
+		}
+		if err := db.WithContext(context.Background()).Create(&item).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func SeedDefaultUsers(db *gorm.DB) error {
