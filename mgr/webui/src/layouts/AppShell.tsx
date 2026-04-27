@@ -35,7 +35,7 @@ function getSelectedPath(pathname: string) {
     (item) => item.path !== "/" && pathname.startsWith(item.path),
   );
 
-  return branchMatch?.path ?? "/";
+  return branchMatch?.path ?? "/overview";
 }
 
 function getBreadcrumbItems(pathname: string) {
