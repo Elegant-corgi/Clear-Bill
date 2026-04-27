@@ -19,3 +19,16 @@ ServeTimeout = 5
 
 # Graceful shutdown timeout in seconds
 ShutdownTimeout = 5
+
+[GORM]
+Host = "127.0.0.1"
+Port = 3306
+Database = "clear_bill"
+User = "root"
+Password = "root"
+Charset = "utf8mb4"
+ParseTime = true
+Loc = "Local"
+MaxIdleConns = 10
+MaxOpenConns = 50
+ConnMaxLifetime = 300

@@ -18,6 +18,20 @@ type HTTP struct {
 	ShutdownTimeout int
 }
 
+type GORM struct {
+	Host            string
+	Port            int
+	Database        string
+	User            string
+	Password        string
+	Charset         string
+	ParseTime       bool
+	Loc             string
+	MaxIdleConns    int
+	MaxOpenConns    int
+	ConnMaxLifetime int
+}
+
 func (h HTTP) Address() string {
 	host := h.Host
 	if host == "" {
@@ -37,6 +51,7 @@ type Config struct {
 	WWW         string
 	PrintConfig bool
 	HTTP        HTTP
+	GORM        GORM
 
 	HTTPAddr string `toml:"-" json:"-"`
 	WebRoot  string `toml:"-" json:"-"`
@@ -84,6 +99,19 @@ func defaultConfig() Config {
 			Port:            8080,
 			ServeTimeout:    5,
 			ShutdownTimeout: 5,
+		},
+		GORM: GORM{
+			Host:            "127.0.0.1",
+			Port:            3306,
+			Database:        "clear_bill",
+			User:            "root",
+			Password:        "root",
+			Charset:         "utf8mb4",
+			ParseTime:       true,
+			Loc:             "Local",
+			MaxIdleConns:    10,
+			MaxOpenConns:    50,
+			ConnMaxLifetime: 300,
 		},
 	}
 }

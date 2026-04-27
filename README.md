@@ -21,6 +21,8 @@ Clear Bill 是一个面向账单、客户与对账流程的管理系统，当前
 
 - Go
 - Gin
+- GORM
+- MySQL
 
 ## 快速开始
 
@@ -95,6 +97,7 @@ make release
 
 - 后端提供了健康检查、仪表盘、账单、客户、对账等示例接口
 - 后端内部已按 `action / bll / dal` 三层结构组织
+- 后端已接入 GORM/MySQL，并提供租户 CRUD
 - 前端提供了基于 `Ant Design 6` 的示例工作台页面
 - 顶层 `Makefile` 已接入统一构建与发布入口
 
