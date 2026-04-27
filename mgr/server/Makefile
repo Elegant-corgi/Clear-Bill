@@ -2,7 +2,7 @@ BINARY_NAME := clearbill$(if $(filter Windows_NT,$(OS)),.exe,)
 DIST_DIR := dist
 CMD_DIR := ./cmd/clearbill
 
-.PHONY: all build clean dist run test
+.PHONY: all build clean dist run start test
 
 all: test build
 
@@ -13,6 +13,8 @@ dist: build
 
 run:
 	go run $(CMD_DIR)
+
+start: run
 
 test:
 	go test ./...

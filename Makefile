@@ -9,7 +9,13 @@ $(TOPTARGETS): $(SUBDIRS)
 $(SUBDIRS):
 	$(MAKE) -C $@ $(MAKECMDGOALS)
 
-.PHONY: $(TOPTARGETS) $(SUBDIRS) release
+.PHONY: $(TOPTARGETS) $(SUBDIRS) release server-start webui-dev
+
+server-start:
+	$(MAKE) -C mgr server-start
+
+webui-dev:
+	$(MAKE) -C mgr webui-dev
 
 release:
 	@mkdir -p release/clear-bill-$(VERSION)/server/website
