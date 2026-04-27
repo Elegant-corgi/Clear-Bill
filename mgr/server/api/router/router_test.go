@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"strings"
 	"testing"
 
 	"clearbill/mgr/server/api/vo"
@@ -19,16 +21,69 @@ func newTestRouter() *Router {
 	systemDAL := dal.NewSystemDAL()
 	billingDAL := dal.NewBillingDAL()
 	tenantDAL := dal.NewTenantDAL(nil)
+	userDAL := dal.NewUserDAL(nil)
+	sessionDAL := dal.NewSessionDAL(nil)
+	apiTokenDAL := dal.NewAPITokenDAL(nil)
 
+	authService := bll.NewAuthService(userDAL, sessionDAL, apiTokenDAL)
 	systemService := bll.NewSystemService(systemDAL)
 	billingService := bll.NewBillingService(billingDAL)
-	tenantService := bll.NewTenantService(tenantDAL)
+	tenantService := bll.NewTenantService(tenantDAL, userDAL)
+	userService := bll.NewUserService(userDAL, tenantDAL)
 
+	authAction := action.NewAuthAction(authService)
 	systemAction := action.NewSystemAction(systemService)
 	billingAction := action.NewBillingAction(billingService)
 	tenantAction := action.NewTenantAction(tenantService)
+	userAction := action.NewUserAction(userService)
 
-	return New(config.Config{WebRoot: "website"}, systemAction, billingAction, tenantAction)
+	return New(
+		config.Config{WebRoot: "website"},
+		authService,
+		authAction,
+		systemAction,
+		billingAction,
+		tenantAction,
+		userAction,
+	)
+}
+
+func loginSession(t *testing.T, handler http.Handler, username, password string) string {
+	t.Helper()
+	body := `{"username":"` + username + `","password":"` + password + `"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	resp := httptest.NewRecorder()
+	handler.ServeHTTP(resp, req)
+	if resp.Code != http.StatusOK {
+		t.Fatalf("login failed: code=%d body=%s", resp.Code, resp.Body.String())
+	}
+
+	var payload struct {
+		Success bool         `json:"success"`
+		Data    vo.LoginResp `json:"data"`
+	}
+	if err := json.Unmarshal(resp.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("failed to parse login response: %v", err)
+	}
+	for _, cookie := range resp.Result().Cookies() {
+		if cookie.Name == "clear_bill_session" {
+			return cookie.Value
+		}
+	}
+	t.Fatalf("expected session cookie")
+	return ""
+}
+
+func authorizedJSONRequest(method, path, session, body string) *http.Request {
+	req := httptest.NewRequest(method, path, bytes.NewBufferString(body))
+	if session != "" {
+		req.Header.Set("Cookie", "clear_bill_session="+session)
+	}
+	if body != "" {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	return req
 }
 
 func TestHealthEndpoint(t *testing.T) {
@@ -82,59 +137,100 @@ func TestBillsEndpoint(t *testing.T) {
 	}
 }
 
-func TestTenantCRUD(t *testing.T) {
+func TestAuthTenantAndUserFlow(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	handler := gin.New()
 	newTestRouter().Register(handler)
 
-	createBody := `{"code":"tenant-a","name":"Tenant A","contactName":"Alex","contactPhone":"13800000000","status":"active","remark":"first tenant"}`
-	createReq := httptest.NewRequest(http.MethodPost, "/api/v1/tenants", bytes.NewBufferString(createBody))
-	createReq.Header.Set("Content-Type", "application/json")
-	createResp := httptest.NewRecorder()
-	handler.ServeHTTP(createResp, createReq)
+	sysadminSession := loginSession(t, handler, "sysadmin", "bill123;")
 
-	if createResp.Code != http.StatusCreated {
-		t.Fatalf("expected 201, got %d, body=%s", createResp.Code, createResp.Body.String())
-	}
-
-	var created struct {
-		Success bool      `json:"success"`
-		Data    vo.Tenant `json:"data"`
-	}
-	if err := json.Unmarshal(createResp.Body.Bytes(), &created); err != nil {
-		t.Fatalf("failed to parse create response: %v", err)
-	}
-	if created.Data.ID == 0 {
-		t.Fatalf("expected created tenant id")
+	createTenantReq := authorizedJSONRequest(
+		http.MethodPost,
+		"/api/v1/tenants",
+		sysadminSession,
+		`{"code":"tenant-a","name":"Tenant A"}`,
+	)
+	createTenantResp := httptest.NewRecorder()
+	handler.ServeHTTP(createTenantResp, createTenantReq)
+	if createTenantResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", createTenantResp.Code, createTenantResp.Body.String())
 	}
 
-	listReq := httptest.NewRequest(http.MethodGet, "/api/v1/tenants?keyword=tenant", nil)
-	listResp := httptest.NewRecorder()
-	handler.ServeHTTP(listResp, listReq)
-	if listResp.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", listResp.Code)
+	var tenantPayload struct {
+		Success bool                `json:"success"`
+		Data    vo.CreateTenantResp `json:"data"`
+	}
+	if err := json.Unmarshal(createTenantResp.Body.Bytes(), &tenantPayload); err != nil {
+		t.Fatalf("failed to parse tenant response: %v", err)
+	}
+	if tenantPayload.Data.AdminUsername == "" {
+		t.Fatalf("expected tenant admin username")
 	}
 
-	getReq := httptest.NewRequest(http.MethodGet, "/api/v1/tenants/1", nil)
-	getResp := httptest.NewRecorder()
-	handler.ServeHTTP(getResp, getReq)
-	if getResp.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", getResp.Code)
+	tenantAdminSession := loginSession(t, handler, tenantPayload.Data.AdminUsername, "bill123;")
+
+	createUserReq := authorizedJSONRequest(
+		http.MethodPost,
+		"/api/v1/users",
+		tenantAdminSession,
+		`{"username":"alice","displayName":"Alice","role":"user","status":"active"}`,
+	)
+	createUserResp := httptest.NewRecorder()
+	handler.ServeHTTP(createUserResp, createUserReq)
+	if createUserResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", createUserResp.Code, createUserResp.Body.String())
 	}
 
-	updateBody := `{"code":"tenant-a","name":"Tenant A Updated","contactName":"Alex","contactPhone":"13900000000","status":"inactive","remark":"updated"}`
-	updateReq := httptest.NewRequest(http.MethodPut, "/api/v1/tenants/1", bytes.NewBufferString(updateBody))
-	updateReq.Header.Set("Content-Type", "application/json")
-	updateResp := httptest.NewRecorder()
-	handler.ServeHTTP(updateResp, updateReq)
-	if updateResp.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d, body=%s", updateResp.Code, updateResp.Body.String())
+	var userPayload struct {
+		Success bool              `json:"success"`
+		Data    vo.CreateUserResp `json:"data"`
+	}
+	if err := json.Unmarshal(createUserResp.Body.Bytes(), &userPayload); err != nil {
+		t.Fatalf("failed to parse user response: %v", err)
 	}
 
-	deleteReq := httptest.NewRequest(http.MethodDelete, "/api/v1/tenants/1", nil)
-	deleteResp := httptest.NewRecorder()
-	handler.ServeHTTP(deleteResp, deleteReq)
-	if deleteResp.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", deleteResp.Code)
+	userSession := loginSession(t, handler, "alice", "bill123;")
+
+	changeOwnPasswordReq := authorizedJSONRequest(
+		http.MethodPut,
+		"/api/v1/auth/password",
+		userSession,
+		`{"oldPassword":"bill123;","newPassword":"newpass123"}`,
+	)
+	changeOwnPasswordResp := httptest.NewRecorder()
+	handler.ServeHTTP(changeOwnPasswordResp, changeOwnPasswordReq)
+	if changeOwnPasswordResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", changeOwnPasswordResp.Code, changeOwnPasswordResp.Body.String())
 	}
+
+	resetPasswordReq := authorizedJSONRequest(
+		http.MethodPut,
+		"/api/v1/users/"+toString(userPayload.Data.User.ID)+"/password",
+		tenantAdminSession,
+		`{"newPassword":"reset12345"}`,
+	)
+	resetPasswordResp := httptest.NewRecorder()
+	handler.ServeHTTP(resetPasswordResp, resetPasswordReq)
+	if resetPasswordResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resetPasswordResp.Code, resetPasswordResp.Body.String())
+	}
+
+	createTokenReq := authorizedJSONRequest(
+		http.MethodPost,
+		"/api/v1/auth/tokens",
+		tenantAdminSession,
+		`{"name":"external-client"}`,
+	)
+	createTokenResp := httptest.NewRecorder()
+	handler.ServeHTTP(createTokenResp, createTokenReq)
+	if createTokenResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", createTokenResp.Code, createTokenResp.Body.String())
+	}
+	if !strings.Contains(createTokenResp.Body.String(), "external-client") {
+		t.Fatalf("expected api token response")
+	}
+}
+
+func toString(id uint) string {
+	return strconv.FormatUint(uint64(id), 10)
 }

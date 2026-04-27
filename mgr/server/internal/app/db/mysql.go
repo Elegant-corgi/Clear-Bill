@@ -1,11 +1,13 @@
 package db
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"clearbill/mgr/server/internal/app/config"
 	"clearbill/mgr/server/internal/app/dal/dbmodel"
+	"clearbill/mgr/server/pkg/passwordx"
 	"github.com/google/wire"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -19,11 +21,40 @@ func InitDBClient(cfg config.Config) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	if err := db.AutoMigrate(&dbmodel.Tenant{}); err != nil {
+	if err := db.AutoMigrate(&dbmodel.Tenant{}, &dbmodel.User{}, &dbmodel.UserSession{}, &dbmodel.UserAPIToken{}); err != nil {
+		return nil, err
+	}
+	if err := SeedDefaultUsers(db); err != nil {
 		return nil, err
 	}
 
 	return db, nil
+}
+
+func SeedDefaultUsers(db *gorm.DB) error {
+	var count int64
+	if err := db.WithContext(context.Background()).
+		Model(&dbmodel.User{}).
+		Where("username = ?", "sysadmin").
+		Count(&count).Error; err != nil {
+		return err
+	}
+	if count > 0 {
+		return nil
+	}
+
+	hash, err := passwordx.HashPassword(dbmodel.DefaultUserPassword)
+	if err != nil {
+		return err
+	}
+
+	return db.WithContext(context.Background()).Create(&dbmodel.User{
+		Username:     "sysadmin",
+		DisplayName:  "System Administrator",
+		PasswordHash: hash,
+		Role:         dbmodel.RoleSysadmin,
+		Status:       dbmodel.StatusActive,
+	}).Error
 }
 
 func NewMySQL(cfg config.Config) (*gorm.DB, error) {

@@ -1,11 +1,9 @@
 package action
 
 import (
-	"net/http"
-
 	"clearbill/mgr/server/api/vo"
 	"clearbill/mgr/server/internal/app/bll"
-	"clearbill/mgr/server/pkg/httpx"
+	"clearbill/mgr/server/internal/app/ginx"
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,9 +30,9 @@ func NewSystemAction(systemService *bll.SystemService) *SystemAction {
 func (a *SystemAction) Health(c *gin.Context) {
 	data, err := a.SystemService.Health(c.Request.Context())
 	if err != nil {
-		httpx.WriteError(c.Writer, http.StatusInternalServerError, err.Error())
+		ginx.ResError(c, err, 500)
 		return
 	}
 
-	httpx.WriteData(c.Writer, http.StatusOK, data)
+	ginx.ResSuccess(c, data)
 }

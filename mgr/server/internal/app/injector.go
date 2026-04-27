@@ -22,15 +22,22 @@ type Injector struct {
 	DBClient       *gorm.DB
 	Engine         *gin.Engine
 	Router         *router.Router
+	APITokenDAL    *dal.APITokenDAL
+	AuthAction     *action.AuthAction
 	SystemAction   *action.SystemAction
 	BillingAction  *action.BillingAction
 	TenantAction   *action.TenantAction
+	UserAction     *action.UserAction
+	AuthService    *bll.AuthService
 	SystemService  *bll.SystemService
 	BillingService *bll.BillingService
 	TenantService  *bll.TenantService
+	UserService    *bll.UserService
 	SystemDAL      *dal.SystemDAL
 	BillingDAL     *dal.BillingDAL
 	TenantDAL      *dal.TenantDAL
+	UserDAL        *dal.UserDAL
+	SessionDAL     *dal.SessionDAL
 }
 
 func InitGinEngine(cfg config.Config) *gin.Engine {
@@ -46,12 +53,15 @@ func InitGinEngine(cfg config.Config) *gin.Engine {
 
 func InitRouter(
 	cfg config.Config,
+	authService *bll.AuthService,
+	authAction *action.AuthAction,
 	systemAction *action.SystemAction,
 	billingAction *action.BillingAction,
 	tenantAction *action.TenantAction,
+	userAction *action.UserAction,
 	engine *gin.Engine,
 ) *router.Router {
-	appRouter := router.New(cfg, systemAction, billingAction, tenantAction)
+	appRouter := router.New(cfg, authService, authAction, systemAction, billingAction, tenantAction, userAction)
 	appRouter.Register(engine)
 	return appRouter
 }
