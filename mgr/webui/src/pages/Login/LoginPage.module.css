@@ -2,7 +2,7 @@
   display: grid;
   place-items: center;
   min-height: 100svh;
-  padding: clamp(8px, 1.2vw, 18px);
+  padding: 16px;
   overflow: auto;
   color: #071a36;
   font-family: "Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -13,12 +13,11 @@
 
 .loginLayout {
   position: relative;
-  width: min(calc(100vw - clamp(16px, 2.4vw, 36px)), calc((100svh - clamp(16px, 2.4vw, 36px)) * 2.2), 2048px);
+  width: clamp(1280px, 88vw, 1800px);
   aspect-ratio: 2.2;
-  min-width: 980px;
+  min-width: 1180px;
   min-height: 445px;
   overflow: hidden;
-  border: 2px solid #dfe8f3;
   border-radius: clamp(16px, 1.4vw, 24px);
   background:
     radial-gradient(circle at 56% 43%, rgba(225, 241, 255, 0.92), transparent 24%),
