@@ -39,7 +39,7 @@ func BuildInjector(cfg config.Config) (*Injector, error) {
 	billingService := bll.NewBillingService(billingDAL)
 	billingAction := action.NewBillingAction(billingService)
 	tenantService := bll.NewTenantService(tenantDAL, userDAL)
-	tenantAction := action.NewTenantAction(tenantService, roleService)
+	tenantAction := action.NewTenantActionProvider(tenantService, roleService)
 	roleAction := action.NewRoleAction(roleService)
 	userService := bll.NewUserService(userDAL, tenantDAL, roleService)
 	userAction := action.NewUserAction(userService)

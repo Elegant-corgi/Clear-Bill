@@ -29,7 +29,7 @@ func NewUserAction(userService *bll.UserService) *UserAction {
 // @Accept   json
 // @Produce  json
 // @Param    body  body      vo.CreateUserReq   true  "body参数"
-// @Success  201   {object}  vo.ResponseResult  "执行成功"
+// @Success  200   {object}  vo.ResponseResult  "执行成功"
 // @Router   /api/v1/users [post]
 // @ID       users-create
 // @Tags     user
@@ -239,7 +239,7 @@ func writeUserError(c *gin.Context, err error) {
 		ginx.ResError(c, errors.New("user not found"), 404)
 	case strings.Contains(strings.ToLower(err.Error()), "duplicate"):
 		ginx.ResError(c, err, 409)
-	case err.Error() == "permission denied" || err.Error() == "cannot delete current user" || err.Error() == "tenantId is required" || err.Error() == "tenant admin missing tenant scope" || err.Error() == "system role cannot bind tenant" || err.Error() == "role tenant scope mismatch":
+	case err.Error() == "permission denied" || err.Error() == "cannot delete current user" || err.Error() == "tenantId is required" || err.Error() == "tenant admin missing tenant scope":
 		ginx.ResError(c, err, 403)
 	default:
 		ginx.ResError(c, err, 400)
