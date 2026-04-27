@@ -14,7 +14,8 @@ import (
 )
 
 type Server struct {
-	httpServer *http.Server
+	httpServer      *http.Server
+	shutdownTimeout time.Duration
 }
 
 func NewServer() *Server {
@@ -28,6 +29,11 @@ func NewServer() *Server {
 	systemAction := action.NewSystemAction(systemService)
 	billingAction := action.NewBillingAction(billingService)
 
+	switch cfg.RunMode {
+	case gin.ReleaseMode, gin.TestMode, gin.DebugMode:
+		gin.SetMode(cfg.RunMode)
+	}
+
 	engine := gin.New()
 	engine.Use(gin.Recovery())
 	router.New(cfg, systemAction, billingAction).Register(engine)
@@ -36,18 +42,35 @@ func NewServer() *Server {
 		httpServer: &http.Server{
 			Addr:              cfg.HTTPAddr,
 			Handler:           engine,
-			ReadHeaderTimeout: 5 * time.Second,
+			ReadHeaderTimeout: time.Duration(httpServeTimeout(cfg)) * time.Second,
 		},
+		shutdownTimeout: time.Duration(httpShutdownTimeout(cfg)) * time.Second,
 	}
 }
 
 func (s *Server) Run(ctx context.Context) error {
 	go func() {
 		<-ctx.Done()
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), s.shutdownTimeout)
 		defer cancel()
 		_ = s.httpServer.Shutdown(shutdownCtx)
 	}()
 
 	return s.httpServer.ListenAndServe()
+}
+
+func httpServeTimeout(cfg config.Config) int {
+	if cfg.HTTP.ServeTimeout > 0 {
+		return cfg.HTTP.ServeTimeout
+	}
+
+	return 5
+}
+
+func httpShutdownTimeout(cfg config.Config) int {
+	if cfg.HTTP.ShutdownTimeout > 0 {
+		return cfg.HTTP.ShutdownTimeout
+	}
+
+	return 5
 }
