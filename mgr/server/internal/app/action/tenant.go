@@ -210,6 +210,8 @@ func writeTenantError(c *gin.Context, err error) {
 		ginx.ResError(c, errors.New("tenant not found"), 404)
 	case strings.Contains(strings.ToLower(err.Error()), "duplicate"):
 		ginx.ResError(c, err, 409)
+	case err.Error() == "管理员账号不能包含中文":
+		ginx.ResError(c, err, 400)
 	default:
 		ginx.ResError(c, err, 500)
 	}

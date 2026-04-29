@@ -2,6 +2,7 @@ package bll
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"clearbill/mgr/server/api/vo"
@@ -42,6 +43,9 @@ func (s *TenantService) CreateTenant(ctx context.Context, req *vo.CreateTenantRe
 	adminUsername := req.AdminUsername
 	if adminUsername == "" {
 		adminUsername = fmt.Sprintf("%s_admin", req.Code)
+	}
+	if containsChineseCharacters(adminUsername) {
+		return nil, errors.New("管理员账号不能包含中文")
 	}
 	adminDisplayName := req.AdminDisplayName
 	if adminDisplayName == "" {

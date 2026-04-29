@@ -12,10 +12,11 @@ import {
   Space,
   Table,
   Tag,
+  Tooltip,
   Typography,
 } from "antd";
 import type { TableColumnsType } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { CopyOutlined, PlusOutlined } from "@ant-design/icons";
 
 import { useAuth } from "@/auth/AuthContext";
 import { rolesList } from "@/services/clear-bill/role";
@@ -48,6 +49,7 @@ interface ResetPasswordValues {
   newPassword: string;
 }
 
+const CHINESE_CHARACTER_PATTERN = /[\u3400-\u9fff\uf900-\ufaff]/;
 const STATUS_OPTIONS = [
   { label: "启用", value: "active" },
   { label: "禁用", value: "disabled" },
@@ -59,6 +61,14 @@ function statusMeta(status?: string) {
   }
 
   return { color: "success", label: "启用" };
+}
+
+function validateNoChineseCharacters(value?: string) {
+  if (!value || !CHINESE_CHARACTER_PATTERN.test(value)) {
+    return Promise.resolve();
+  }
+
+  return Promise.reject(new Error("登录账号不能包含中文"));
 }
 
 export function UserListPage() {
@@ -87,7 +97,7 @@ export function UserListPage() {
   const tenantMap = useMemo(
     () =>
       tenants.reduce<Record<number, string>>((acc, item) => {
-        acc[item.id] = item.name;
+        acc[item.id] = item.code ? `${item.name} - ${item.code}` : item.name;
         return acc;
       }, {}),
     [tenants],
@@ -205,16 +215,41 @@ export function UserListPage() {
         const data = unwrapResponse(response, "创建用户失败");
         message.success("用户创建成功");
         modal.success({
+          className: styles.successModal,
           title: "用户创建成功",
           content: (
             <div className={styles.successContent}>
               <p>
-                登录账号：
-                <strong>{data.user.username}</strong>
+                <span className={styles.successLabel}>登录账号：</span>
+                <span className={styles.successValueGroup}>
+                  <span className={styles.successValue}>{data.user.username}</span>
+                  <Button
+                    type="text"
+                    size="small"
+                    className={styles.copyButton}
+                    icon={<CopyOutlined />}
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(data.user.username);
+                      message.success("复制成功");
+                    }}
+                  />
+                </span>
               </p>
               <p>
-                初始密码：
-                <strong>{data.initialPassword}</strong>
+                <span className={styles.successLabel}>初始密码：</span>
+                <span className={styles.successValueGroup}>
+                  <span className={styles.successValue}>{data.initialPassword}</span>
+                  <Button
+                    type="text"
+                    size="small"
+                    className={styles.copyButton}
+                    icon={<CopyOutlined />}
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(data.initialPassword);
+                      message.success("复制成功");
+                    }}
+                  />
+                </span>
               </p>
             </div>
           ),
@@ -341,29 +376,47 @@ export function UserListPage() {
       key: "actions",
       fixed: "right",
       width: 200,
-      render: (_, record) => (
-        <Space size={0} className={styles.actionGroup}>
-          {!sysadmin ? (
-            <Button type="link" className="ui-action-link ui-action-edit" onClick={() => handleOpenEdit(record)}>
-              编辑
+      render: (_, record) => {
+        const isCurrentUser = currentUser?.id === record.id;
+
+        return (
+          <Space size={0} className={styles.actionGroup}>
+            {!sysadmin ? (
+              <Button type="link" className="ui-action-link ui-action-edit" onClick={() => handleOpenEdit(record)}>
+                编辑
+              </Button>
+            ) : null}
+            <Button
+              type="link"
+              className="ui-action-link ui-action-reset"
+              onClick={() => handleOpenResetPassword(record)}
+            >
+              重置密码
             </Button>
-          ) : null}
-          <Button type="link" className="ui-action-link ui-action-reset" onClick={() => handleOpenResetPassword(record)}>
-            重置密码
-          </Button>
-          <Popconfirm
-            title="删除后不可恢复，确认删除该用户吗？"
-            okText="删除"
-            cancelText="取消"
-            okButtonProps={{ danger: true }}
-            onConfirm={() => handleDelete(record)}
-          >
-            <Button type="link" className="ui-action-link ui-action-delete">
-              删除
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
+            {isCurrentUser ? (
+              <Tooltip title="不能删除当前登录账号">
+                <span className={styles.disabledActionWrapper}>
+                  <Button type="link" disabled className={styles.disabledDeleteButton}>
+                    删除
+                  </Button>
+                </span>
+              </Tooltip>
+            ) : (
+              <Popconfirm
+                title="删除后不可恢复，确认删除该用户吗？"
+                okText="删除"
+                cancelText="取消"
+                okButtonProps={{ danger: true }}
+                onConfirm={() => handleDelete(record)}
+              >
+                <Button type="link" className="ui-action-link ui-action-delete">
+                  删除
+                </Button>
+              </Popconfirm>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
@@ -458,6 +511,7 @@ export function UserListPage() {
               rules={[
                 { required: true, message: "请输入登录账号" },
                 { max: 64, message: "登录账号不能超过 64 个字符" },
+                { validator: (_, value) => validateNoChineseCharacters(value) },
               ]}
             >
               <Input placeholder="请输入登录账号" maxLength={64} />
