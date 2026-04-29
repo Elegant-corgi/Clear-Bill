@@ -55,6 +55,21 @@ textarea.ant-input:hover,
   background: #ffffff !important;
 }
 
+.ant-input-outlined:focus,
+.ant-input-outlined:focus-within,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused,
+.ant-input-textarea-affix-wrapper:focus-within,
+textarea.ant-input:focus,
+.ant-input-password:focus-within,
+.ant-picker-focused,
+.ant-input-number-focused,
+.ant-select-focused .ant-select-selector,
+.ant-select-open .ant-select-selector {
+  border-color: #9eb7c4 !important;
+  box-shadow: 0 0 0 2px rgba(158, 183, 196, 0.14) !important;
+}
+
 .ant-input-outlined.ant-input-disabled,
 .ant-input-affix-wrapper.ant-input-affix-wrapper-disabled,
 .ant-input-textarea-affix-wrapper.ant-input-disabled,
