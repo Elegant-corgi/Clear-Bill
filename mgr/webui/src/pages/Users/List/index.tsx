@@ -15,6 +15,7 @@ import {
   Typography,
 } from "antd";
 import type { TableColumnsType } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 
 import { useAuth } from "@/auth/AuthContext";
 import { rolesList } from "@/services/clear-bill/role";
@@ -342,10 +343,10 @@ export function UserListPage() {
       width: 200,
       render: (_, record) => (
         <Space size={0} className={styles.actionGroup}>
-          <Button type="link" onClick={() => handleOpenEdit(record)}>
+          <Button type="link" className="ui-action-link ui-action-edit" onClick={() => handleOpenEdit(record)}>
             编辑
           </Button>
-          <Button type="link" onClick={() => handleOpenResetPassword(record)}>
+          <Button type="link" className="ui-action-link ui-action-reset" onClick={() => handleOpenResetPassword(record)}>
             重置密码
           </Button>
           <Popconfirm
@@ -355,7 +356,7 @@ export function UserListPage() {
             okButtonProps={{ danger: true }}
             onConfirm={() => handleDelete(record)}
           >
-            <Button type="link" danger>
+            <Button type="link" className="ui-action-link ui-action-delete">
               删除
             </Button>
           </Popconfirm>
@@ -390,7 +391,7 @@ export function UserListPage() {
           </Form>
 
           {canCreateUser ? (
-            <Button type="primary" ghost onClick={handleOpenCreate}>
+            <Button type="primary" ghost icon={<PlusOutlined />} onClick={handleOpenCreate}>
               新建用户
             </Button>
           ) : null}

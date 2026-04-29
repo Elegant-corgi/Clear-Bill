@@ -9,6 +9,16 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --action-edit: #1f9f8f;
+  --action-edit-bg: #eefaf7;
+  --action-enable: #2da56f;
+  --action-enable-bg: #eef9f2;
+  --action-disable: #c7922a;
+  --action-disable-bg: #fff8ea;
+  --action-reset: #4f7ea8;
+  --action-reset-bg: #eef5fc;
+  --action-delete: #df6a72;
+  --action-delete-bg: #fff1f3;
 }
 
 * {
@@ -133,6 +143,69 @@ textarea.ant-input[disabled],
 
 .ant-table-wrapper .ant-table-cell-row-hover {
   background: #f9fcff !important;
+}
+
+.ui-action-link {
+  height: 28px;
+  padding: 0 8px !important;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: color .18s ease, background-color .18s ease;
+}
+
+.ui-action-link:hover,
+.ui-action-link:focus {
+  background: transparent;
+}
+
+.ui-action-edit {
+  color: var(--action-edit);
+}
+
+.ui-action-edit:hover,
+.ui-action-edit:focus {
+  color: var(--action-edit) !important;
+  background: var(--action-edit-bg) !important;
+}
+
+.ui-action-enable {
+  color: var(--action-enable);
+}
+
+.ui-action-enable:hover,
+.ui-action-enable:focus {
+  color: var(--action-enable) !important;
+  background: var(--action-enable-bg) !important;
+}
+
+.ui-action-disable {
+  color: var(--action-disable);
+}
+
+.ui-action-disable:hover,
+.ui-action-disable:focus {
+  color: var(--action-disable) !important;
+  background: var(--action-disable-bg) !important;
+}
+
+.ui-action-reset {
+  color: var(--action-reset);
+}
+
+.ui-action-reset:hover,
+.ui-action-reset:focus {
+  color: var(--action-reset) !important;
+  background: var(--action-reset-bg) !important;
+}
+
+.ui-action-delete {
+  color: var(--action-delete);
+}
+
+.ui-action-delete:hover,
+.ui-action-delete:focus {
+  color: var(--action-delete) !important;
+  background: var(--action-delete-bg) !important;
 }
 
 .shell {

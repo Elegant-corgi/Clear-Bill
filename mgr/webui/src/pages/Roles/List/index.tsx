@@ -16,6 +16,7 @@ import {
   Typography,
 } from "antd";
 import type { TableColumnsType } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 
 import { useAuth } from "@/auth/AuthContext";
 import {
@@ -270,7 +271,7 @@ export function RoleListPage() {
           <Typography.Text type="secondary">内置角色不可修改</Typography.Text>
         ) : (
           <Space size={4} wrap>
-            <Button type="link" onClick={() => handleOpenEdit(record)}>
+            <Button type="link" className="ui-action-link ui-action-edit" onClick={() => handleOpenEdit(record)}>
               编辑
             </Button>
             <Popconfirm
@@ -280,7 +281,7 @@ export function RoleListPage() {
               okButtonProps={{ danger: true }}
               onConfirm={() => handleDelete(record)}
             >
-              <Button type="link" danger>
+              <Button type="link" className="ui-action-link ui-action-delete">
                 删除
               </Button>
             </Popconfirm>
@@ -314,7 +315,7 @@ export function RoleListPage() {
             </Form.Item>
           </Form>
 
-          <Button type="primary" ghost onClick={handleOpenCreate}>
+          <Button type="primary" ghost icon={<PlusOutlined />} onClick={handleOpenCreate}>
             新建角色
           </Button>
         </div>
