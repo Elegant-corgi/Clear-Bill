@@ -3,19 +3,28 @@ import {
   LockOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Button, Checkbox, Form, Input } from "antd";
-import { useNavigate } from "react-router-dom";
+import { App, Button, Form, Input } from "antd";
+import { useLocation, useNavigate } from "react-router-dom";
+
+import { useAuth } from "@/auth/AuthContext";
+import { getErrorMessage } from "@/utils/api";
+import { resolveFirstAccessiblePath } from "@/utils/access";
 
 import styles from "./LoginPage.module.css";
 
 const features = [
-  { title: "安全可靠", desc: ["多重加密保障", "数据安全"], tone: "green", icon: "shield" },
-  { title: "高效稳定", desc: ["系统稳定高效", "处理海量数据"], tone: "blue", icon: "bolt" },
-  { title: "精准计费", desc: ["灵活计费策略", "精准账单生成"], tone: "green", icon: "pie" },
-  { title: "智能分析", desc: ["多维数据分析", "助力业务决策"], tone: "blue", icon: "layers" },
+  { title: "安全可靠", desc: ["多重加密保障", "数据安全无忧"], tone: "green", icon: "shield" },
+  { title: "高效稳定", desc: ["系统稳定轻松", "承载海量数据"], tone: "blue", icon: "bolt" },
+  { title: "精准计费", desc: ["灵活计费策略", "准确生成账单"], tone: "green", icon: "pie" },
+  { title: "智能分析", desc: ["多维数据分析", "辅助业务决策"], tone: "blue", icon: "layers" },
 ] as const;
 
 type FeatureIconType = (typeof features)[number]["icon"];
+
+interface LoginFormValues {
+  password: string;
+  username: string;
+}
 
 function AppMark() {
   return (
@@ -120,7 +129,7 @@ function HeroArtwork() {
         <path d="M398 130h132l36 40-18 140a15 15 0 0 1-16.4 13l-142-12a15 15 0 0 1-13.6-16.5l16.6-151.4c.9-7.6 4.4-13.1 5.4-13.1Z" fill="url(#loginPaperFront)" filter="url(#loginArtShadow)" />
         <path d="m530 130 36 40-45-4 9-36Z" fill="url(#loginPaperFold)" />
         <path d="M425 172h78M424 201h96M421 231h100M418 260h76" stroke="#dbe7ff" strokeLinecap="round" strokeWidth="12" />
-        <text x="418" y="207" fill="#79a1ff" fontSize="42" fontWeight="800">¥</text>
+        <text x="418" y="207" fill="#79a1ff" fontSize="42" fontWeight="800">账</text>
         <circle cx="548" cy="256" r="38" fill="#2fc984" filter="url(#loginArtShadow)" />
         <path d="m532 255 13 14 27-31" fill="none" stroke="#fff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="9" />
       </svg>
@@ -129,7 +138,24 @@ function HeroArtwork() {
 }
 
 export function LoginPage() {
+  const { message } = App.useApp();
+  const { login } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
+
+  const handleSubmit = async (values: LoginFormValues) => {
+    try {
+      const user = await login({
+        password: values.password.trim(),
+        username: values.username.trim(),
+      });
+      message.success("登录成功");
+      const nextPath = (location.state as { from?: string } | null)?.from || resolveFirstAccessiblePath(user);
+      navigate(nextPath, { replace: true });
+    } catch (error) {
+      message.error(getErrorMessage(error, "登录失败"));
+    }
+  };
 
   return (
     <main className={styles.loginPage}>
@@ -170,17 +196,25 @@ export function LoginPage() {
             <p>请输入您的账号和密码</p>
           </div>
 
-          <Form
+          <Form<LoginFormValues>
             className={styles.loginForm}
             layout="vertical"
             autoComplete="off"
-            onFinish={() => navigate("/overview")}
+            onFinish={(values) => void handleSubmit(values)}
           >
-            <Form.Item className={styles.formItem} name="account">
-              <Input size="large" prefix={<UserOutlined />} placeholder="请输入账号/邮箱/手机号" />
+            <Form.Item<LoginFormValues>
+              className={styles.formItem}
+              name="username"
+              rules={[{ required: true, message: "请输入账号" }]}
+            >
+              <Input size="large" prefix={<UserOutlined />} placeholder="请输入账号" />
             </Form.Item>
 
-            <Form.Item className={styles.formItem} name="password">
+            <Form.Item<LoginFormValues>
+              className={styles.formItem}
+              name="password"
+              rules={[{ required: true, message: "请输入密码" }]}
+            >
               <Input.Password
                 size="large"
                 prefix={<LockOutlined />}
@@ -188,11 +222,6 @@ export function LoginPage() {
                 placeholder="请输入密码"
               />
             </Form.Item>
-
-            <div className={styles.formMeta}>
-              <Checkbox>记住我</Checkbox>
-              <button type="button">忘记密码?</button>
-            </div>
 
             <Button type="primary" htmlType="submit" block className={styles.loginButton}>
               登录

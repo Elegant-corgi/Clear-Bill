@@ -8,7 +8,7 @@ export async function tenantsList(
   params: API.tenantsListParams,
   options?: { [key: string]: any }
 ) {
-  return request<any>("/api/v1/tenants", {
+  return request<API.ResponseResult<API.Tenant[]>>("/api/v1/tenants", {
     method: "GET",
     params: {
       ...params,
@@ -22,7 +22,7 @@ export async function tenantsCreate(
   body: API.CreateTenantReq,
   options?: { [key: string]: any }
 ) {
-  return request<any>("/api/v1/tenants", {
+  return request<API.ResponseResult<API.CreateTenantResp>>("/api/v1/tenants", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -39,7 +39,7 @@ export async function tenantsGet(
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params;
-  return request<any>(`/api/v1/tenants/${param0}`, {
+  return request<API.ResponseResult<API.Tenant>>(`/api/v1/tenants/${param0}`, {
     method: "GET",
     params: { ...queryParams },
     ...(options || {}),
@@ -54,7 +54,7 @@ export async function tenantsUpdate(
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params;
-  return request<any>(`/api/v1/tenants/${param0}`, {
+  return request<API.ResponseResult<API.Tenant>>(`/api/v1/tenants/${param0}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -72,7 +72,7 @@ export async function tenantsDelete(
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params;
-  return request<any>(`/api/v1/tenants/${param0}`, {
+  return request<API.ResponseResult<unknown>>(`/api/v1/tenants/${param0}`, {
     method: "DELETE",
     params: { ...queryParams },
     ...(options || {}),

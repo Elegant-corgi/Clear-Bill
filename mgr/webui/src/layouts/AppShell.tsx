@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   DoubleLeftOutlined,
@@ -7,45 +7,42 @@ import {
   FileDoneOutlined,
   HomeOutlined,
   MenuOutlined,
+  SafetyCertificateOutlined,
   TeamOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { App, Button, Drawer, Dropdown, Grid, Layout } from "antd";
+import { App, Button, Drawer, Dropdown, Form, Grid, Input, Layout, Modal, Spin } from "antd";
 import type { MenuProps } from "antd";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 
+import { useAuth } from "@/auth/AuthContext";
 import defaultSettings from "@config/defaultSettings";
+import { getErrorMessage } from "@/utils/api";
+import {
+  canAccessPath,
+  canAccessRoleList,
+  canAccessTenantList,
+  canAccessUserList,
+  getCurrentTitle,
+  OVERVIEW_PATH,
+  ROLE_LIST_PATH,
+  roleLabel,
+  TENANT_LIST_PATH,
+  USER_LIST_PATH,
+} from "@/utils/access";
 
 const { Content, Header, Sider } = Layout;
 
-const OVERVIEW_PATH = "/overview";
-const TENANT_LIST_PATH = "/tenants/list";
-const USER_LIST_PATH = "/tenants/users";
-
-function getSelectedPath(pathname: string) {
-  if (pathname.startsWith(TENANT_LIST_PATH)) {
-    return TENANT_LIST_PATH;
-  }
-
-  if (pathname.startsWith(USER_LIST_PATH)) {
-    return USER_LIST_PATH;
-  }
-
-  return OVERVIEW_PATH;
+interface PasswordFormValues {
+  confirmPassword: string;
+  newPassword: string;
+  oldPassword: string;
 }
 
-function getCurrentTitle(pathname: string) {
-  const selectedPath = getSelectedPath(pathname);
-
-  if (selectedPath === TENANT_LIST_PATH) {
-    return "租户列表";
-  }
-
-  if (selectedPath === USER_LIST_PATH) {
-    return "用户列表";
-  }
-
-  return "首页";
+interface MenuItem {
+  icon: React.ReactNode;
+  key: string;
+  label: string;
 }
 
 function UserAvatar() {
@@ -61,8 +58,9 @@ function UserAvatar() {
 
 interface SidebarProps {
   collapsed: boolean;
-  tenantMenuCollapsed: boolean;
+  menuItems: MenuItem[];
   selectedPath: string;
+  tenantMenuCollapsed: boolean;
   onNavigate: (path: string) => void;
   onToggleCollapse: () => void;
   onToggleTenantMenu: () => void;
@@ -70,12 +68,15 @@ interface SidebarProps {
 
 function Sidebar({
   collapsed,
-  tenantMenuCollapsed,
+  menuItems,
   selectedPath,
+  tenantMenuCollapsed,
   onNavigate,
   onToggleCollapse,
   onToggleTenantMenu,
 }: SidebarProps) {
+  const tenantMenuItems = menuItems.filter((item) => item.key !== OVERVIEW_PATH);
+
   return (
     <div className={`shell__sidebar-inner ${collapsed ? "is-collapsed" : ""}`}>
       <div className="shell__brand">
@@ -98,42 +99,33 @@ function Sidebar({
           {!collapsed ? <span className="shell__menu-label">首页</span> : null}
         </button>
 
-        <section className="shell__menu-group">
-          {!collapsed ? (
-            <button className="shell__menu-group-title" type="button" onClick={onToggleTenantMenu}>
-              <span>租户管理</span>
-              <DownOutlined className={tenantMenuCollapsed ? "is-folded" : ""} />
-            </button>
-          ) : null}
-
-          {!tenantMenuCollapsed || collapsed ? (
-            <div className="shell__menu-list">
-              <button
-                className={`shell__menu-item ${selectedPath === TENANT_LIST_PATH ? "is-active" : ""}`}
-                type="button"
-                title={collapsed ? "租户列表" : undefined}
-                onClick={() => onNavigate(TENANT_LIST_PATH)}
-              >
-                <span className="shell__menu-icon">
-                  <TeamOutlined />
-                </span>
-                {!collapsed ? <span className="shell__menu-label">租户列表</span> : null}
+        {tenantMenuItems.length > 0 ? (
+          <section className="shell__menu-group">
+            {!collapsed ? (
+              <button className="shell__menu-group-title" type="button" onClick={onToggleTenantMenu}>
+                <span>租户管理</span>
+                <DownOutlined className={tenantMenuCollapsed ? "is-folded" : ""} />
               </button>
+            ) : null}
 
-              <button
-                className={`shell__menu-item ${selectedPath === USER_LIST_PATH ? "is-active" : ""}`}
-                type="button"
-                title={collapsed ? "用户列表" : undefined}
-                onClick={() => onNavigate(USER_LIST_PATH)}
-              >
-                <span className="shell__menu-icon">
-                  <UserOutlined />
-                </span>
-                {!collapsed ? <span className="shell__menu-label">用户列表</span> : null}
-              </button>
-            </div>
-          ) : null}
-        </section>
+            {!tenantMenuCollapsed || collapsed ? (
+              <div className="shell__menu-list">
+                {tenantMenuItems.map((item) => (
+                  <button
+                    key={item.key}
+                    className={`shell__menu-item ${selectedPath === item.key ? "is-active" : ""}`}
+                    type="button"
+                    title={collapsed ? item.label : undefined}
+                    onClick={() => onNavigate(item.key)}
+                  >
+                    <span className="shell__menu-icon">{item.icon}</span>
+                    {!collapsed ? <span className="shell__menu-label">{item.label}</span> : null}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
       </nav>
 
       <button className="shell__collapse" type="button" onClick={onToggleCollapse}>
@@ -146,19 +138,111 @@ function Sidebar({
 
 export function AppShell() {
   const { message } = App.useApp();
+  const { changePassword, loading, logout, user } = useAuth();
   const screens = Grid.useBreakpoint();
   const location = useLocation();
   const navigate = useNavigate();
+  const [passwordForm] = Form.useForm<PasswordFormValues>();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [passwordSubmitting, setPasswordSubmitting] = useState(false);
   const [siderCollapsed, setSiderCollapsed] = useState(false);
   const [tenantMenuCollapsed, setTenantMenuCollapsed] = useState(false);
 
-  const selectedPath = getSelectedPath(location.pathname);
-  const currentTitle = getCurrentTitle(location.pathname);
+  const menuItems = useMemo<MenuItem[]>(() => {
+    const items: MenuItem[] = [
+      {
+        icon: <HomeOutlined />,
+        key: OVERVIEW_PATH,
+        label: "首页",
+      },
+    ];
+
+    if (canAccessTenantList(user)) {
+      items.push({
+        icon: <TeamOutlined />,
+        key: TENANT_LIST_PATH,
+        label: "租户列表",
+      });
+    }
+
+    if (canAccessUserList(user)) {
+      items.push({
+        icon: <UserOutlined />,
+        key: USER_LIST_PATH,
+        label: "用户列表",
+      });
+    }
+
+    if (canAccessRoleList(user)) {
+      items.push({
+        icon: <SafetyCertificateOutlined />,
+        key: ROLE_LIST_PATH,
+        label: "角色权限",
+      });
+    }
+
+    return items;
+  }, [user]);
+
+  const selectedPath =
+    menuItems.find((item) => location.pathname.startsWith(item.key) && item.key !== OVERVIEW_PATH)?.key ||
+    (location.pathname.startsWith(OVERVIEW_PATH) ? OVERVIEW_PATH : menuItems[0]?.key || OVERVIEW_PATH);
+
+  useEffect(() => {
+    if (user && !canAccessPath(user, location.pathname)) {
+      navigate(OVERVIEW_PATH, { replace: true });
+    }
+  }, [location.pathname, navigate, user]);
+
+  if (loading) {
+    return (
+      <div style={{ display: "grid", minHeight: "100vh", placeItems: "center" }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
   const handleNavigate = (path: string) => {
     navigate(path);
     setDrawerOpen(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      message.success("已退出登录");
+      navigate("/login", { replace: true });
+    } catch (error) {
+      message.error(getErrorMessage(error, "退出登录失败"));
+    }
+  };
+
+  const handlePasswordSubmit = async () => {
+    try {
+      const values = await passwordForm.validateFields();
+      setPasswordSubmitting(true);
+      await changePassword({
+        newPassword: values.newPassword.trim(),
+        oldPassword: values.oldPassword.trim(),
+      });
+      message.success("密码修改成功，请使用新密码重新登录");
+      setPasswordOpen(false);
+      passwordForm.resetFields();
+      await handleLogout();
+    } catch (error) {
+      if (typeof error === "object" && error !== null && "errorFields" in error) {
+        return;
+      }
+
+      message.error(getErrorMessage(error, "修改密码失败"));
+    } finally {
+      setPasswordSubmitting(false);
+    }
   };
 
   const accountMenuItems: MenuProps["items"] = [
@@ -169,32 +253,32 @@ export function AppShell() {
 
   const handleAccountMenuClick: MenuProps["onClick"] = ({ key }) => {
     if (key === "password") {
-      void message.info("修改密码功能开发中");
+      passwordForm.resetFields();
+      setPasswordOpen(true);
       return;
     }
 
     if (key === "logout") {
-      navigate("/login", { replace: true });
+      void handleLogout();
     }
   };
 
-  const sidebar = useMemo(
-    () => (
-      <Sidebar
-        collapsed={siderCollapsed}
-        tenantMenuCollapsed={tenantMenuCollapsed}
-        selectedPath={selectedPath}
-        onNavigate={handleNavigate}
-        onToggleCollapse={() => setSiderCollapsed((value) => !value)}
-        onToggleTenantMenu={() => setTenantMenuCollapsed((value) => !value)}
-      />
-    ),
-    [selectedPath, siderCollapsed, tenantMenuCollapsed],
+  const sidebar = (
+    <Sidebar
+      collapsed={siderCollapsed}
+      menuItems={menuItems}
+      tenantMenuCollapsed={tenantMenuCollapsed}
+      selectedPath={selectedPath}
+      onNavigate={handleNavigate}
+      onToggleCollapse={() => setSiderCollapsed((value) => !value)}
+      onToggleTenantMenu={() => setTenantMenuCollapsed((value) => !value)}
+    />
   );
 
   const drawerSidebar = (
     <Sidebar
       collapsed={false}
+      menuItems={menuItems}
       tenantMenuCollapsed={tenantMenuCollapsed}
       selectedPath={selectedPath}
       onNavigate={handleNavigate}
@@ -204,55 +288,108 @@ export function AppShell() {
   );
 
   return (
-    <Layout className="shell">
-      {screens.lg ? (
-        <Sider width={siderCollapsed ? 92 : 260} className="shell__sider">
-          {sidebar}
-        </Sider>
-      ) : null}
+    <>
+      <Layout className="shell">
+        {screens.lg ? (
+          <Sider width={siderCollapsed ? 92 : 260} className="shell__sider">
+            {sidebar}
+          </Sider>
+        ) : null}
 
-      <Layout className="shell__workspace">
-        <Header className="shell__header">
-          <div className="shell__header-title">
-            {!screens.lg ? (
-              <Button shape="circle" icon={<MenuOutlined />} onClick={() => setDrawerOpen(true)} />
-            ) : null}
-            <h1>{currentTitle}</h1>
-          </div>
+        <Layout className="shell__workspace">
+          <Header className="shell__header">
+            <div className="shell__header-title">
+              {!screens.lg ? (
+                <Button shape="circle" icon={<MenuOutlined />} onClick={() => setDrawerOpen(true)} />
+              ) : null}
+              <h1>{getCurrentTitle(location.pathname)}</h1>
+            </div>
 
-          <div className="shell__toolbar">
-            <span className="shell__toolbar-divider" />
-            <Dropdown
-              menu={{ items: accountMenuItems, onClick: handleAccountMenuClick }}
-              placement="bottomRight"
-              trigger={["click"]}
-            >
-              <button className="shell__profile" type="button">
-                <UserAvatar />
-                <span className="shell__profile-text">
-                  <strong>管理员</strong>
-                  <span>超级管理员</span>
-                </span>
-                <DownOutlined />
-              </button>
-            </Dropdown>
-          </div>
-        </Header>
+            <div className="shell__toolbar">
+              <span className="shell__toolbar-divider" />
+              <Dropdown
+                menu={{ items: accountMenuItems, onClick: handleAccountMenuClick }}
+                placement="bottomRight"
+                trigger={["click"]}
+              >
+                <button className="shell__profile" type="button">
+                  <UserAvatar />
+                  <span className="shell__profile-text">
+                    <strong>{user.displayName || user.username}</strong>
+                    <span>{roleLabel(user.role)}</span>
+                  </span>
+                  <DownOutlined />
+                </button>
+              </Dropdown>
+            </div>
+          </Header>
 
-        <Content className="shell__content">
-          <Outlet />
-        </Content>
+          <Content className="shell__content">
+            <Outlet />
+          </Content>
+        </Layout>
+
+        <Drawer
+          placement="left"
+          width={260}
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          styles={{ body: { padding: 0 } }}
+        >
+          {drawerSidebar}
+        </Drawer>
       </Layout>
 
-      <Drawer
-        placement="left"
-        width={260}
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        styles={{ body: { padding: 0 } }}
+      <Modal
+        title="修改密码"
+        open={passwordOpen}
+        onCancel={() => {
+          setPasswordOpen(false);
+          passwordForm.resetFields();
+        }}
+        onOk={() => void handlePasswordSubmit()}
+        okText="确认修改"
+        cancelText="取消"
+        confirmLoading={passwordSubmitting}
       >
-        {drawerSidebar}
-      </Drawer>
-    </Layout>
+        <Form<PasswordFormValues> form={passwordForm} layout="vertical">
+          <Form.Item<PasswordFormValues>
+            label="旧密码"
+            name="oldPassword"
+            rules={[{ required: true, message: "请输入旧密码" }]}
+          >
+            <Input.Password placeholder="请输入旧密码" />
+          </Form.Item>
+          <Form.Item<PasswordFormValues>
+            label="新密码"
+            name="newPassword"
+            rules={[
+              { required: true, message: "请输入新密码" },
+              { min: 6, message: "新密码至少 6 位" },
+            ]}
+          >
+            <Input.Password placeholder="请输入新密码" />
+          </Form.Item>
+          <Form.Item<PasswordFormValues>
+            label="确认新密码"
+            name="confirmPassword"
+            dependencies={["newPassword"]}
+            rules={[
+              { required: true, message: "请再次输入新密码" },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue("newPassword") === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error("两次输入的新密码不一致"));
+                },
+              }),
+            ]}
+          >
+            <Input.Password placeholder="请再次输入新密码" />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
   );
 }

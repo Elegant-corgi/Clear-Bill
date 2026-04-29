@@ -3,6 +3,7 @@ import type { ThemeConfig } from "antd";
 import { RouterProvider } from "react-router-dom";
 
 import defaultSettings from "@config/defaultSettings";
+import { AuthProvider } from "@/auth/AuthContext";
 import { router } from "@/routes";
 
 const appTheme: ThemeConfig = {
@@ -28,7 +29,9 @@ export default function App() {
   return (
     <ConfigProvider theme={appTheme}>
       <AntApp>
-        <RouterProvider router={router} />
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
       </AntApp>
     </ConfigProvider>
   );
