@@ -17,7 +17,7 @@ export async function usersList(
   });
 }
 
-/** 创建用户 仅超管和租户管理员可创建用户，默认密码为 bill123; POST /api/v1/users */
+/** 创建用户 仅超管和租户管理员可创建用户，默认密码为 stor123; POST /api/v1/users */
 export async function usersCreate(
   body: API.CreateUserReq,
   options?: { [key: string]: any }

@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	DefaultUserPassword = "bill123;"
+	DefaultUserPassword = "stor123;"
 	RoleSysadmin        = "sysadmin"
 	RoleTenantAdmin     = "tenant_admin"
 	RoleUser            = "user"

@@ -727,7 +727,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "仅超管和租户管理员可创建用户，默认密码为 bill123;",
+                "description": "仅超管和租户管理员可创建用户，默认密码为 stor123;",
                 "consumes": [
                     "application/json"
                 ],
