@@ -1,9 +1,10 @@
 package vo
 
 type ResponseResult struct {
-	Success bool   `json:"success"`
-	Data    any    `json:"data,omitempty"`
-	Error   string `json:"error,omitempty"`
+	Success      bool   `json:"success"`
+	Data         any    `json:"data,omitempty"`
+	Error        string `json:"error,omitempty"`
+	ErrorMessage string `json:"errorMessage,omitempty"`
 }
 
 const OKStatus = "ok"

@@ -37,14 +37,13 @@ func ResError(c *gin.Context, err error, status ...int) {
 		httpStatus = status[0]
 	}
 
-	message := "internal server error"
-	if err != nil {
-		message = err.Error()
-	}
+	rawMessage := fallbackRawErrorMessage(err, httpStatus)
+	message := normalizeErrorMessage(err, httpStatus)
 
 	c.JSON(httpStatus, vo.ResponseResult{
-		Success: false,
-		Error:   message,
+		Success:      false,
+		Error:        rawMessage,
+		ErrorMessage: message,
 	})
 	c.Abort()
 }
