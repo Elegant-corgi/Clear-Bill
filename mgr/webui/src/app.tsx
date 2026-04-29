@@ -26,8 +26,9 @@ const appTheme: ThemeConfig = {
       addonBg: "#ffffff",
       colorBgContainer: "#ffffff",
       colorTextPlaceholder: "#a0aec0",
-      activeBorderColor: defaultSettings.primaryColor,
+      activeBorderColor: "#9eb7c4",
       hoverBorderColor: "#cfd8e3",
+      activeShadow: "0 0 0 2px rgba(158, 183, 196, 0.14)",
     },
     Table: {
       colorBgContainer: "#ffffff",
@@ -44,8 +45,9 @@ const appTheme: ThemeConfig = {
       selectorBg: "#ffffff",
       colorBgElevated: "#ffffff",
       colorTextPlaceholder: "#a0aec0",
-      activeBorderColor: defaultSettings.primaryColor,
-      hoverBorderColor: "#7fdab2",
+      activeBorderColor: "#9eb7c4",
+      hoverBorderColor: "#cfd8e3",
+      activeOutlineColor: "rgba(158, 183, 196, 0.14)",
     },
   },
 };

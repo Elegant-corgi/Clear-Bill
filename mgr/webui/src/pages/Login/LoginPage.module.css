@@ -287,8 +287,8 @@
 
 .loginForm :global(.ant-input-affix-wrapper:hover),
 .loginForm :global(.ant-input-affix-wrapper-focused) {
-  border-color: #d3dfec;
-  box-shadow: 0 0 0 3px rgba(32, 196, 133, 0.06);
+  border-color: #c9d6e2;
+  box-shadow: 0 0 0 2px rgba(158, 183, 196, 0.12);
 }
 
 .loginForm :global(.ant-input-prefix) {
