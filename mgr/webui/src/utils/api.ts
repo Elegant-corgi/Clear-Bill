@@ -1,12 +1,18 @@
+import { ApiRequestError } from "@/services/request";
+
 export function unwrapResponse<T>(response: API.ResponseResult<T>, fallbackMessage: string) {
   if (!response.success) {
-    throw new Error(response.error || fallbackMessage);
+    throw new ApiRequestError(response.error || fallbackMessage, 200, response.errorMessage || response.error || fallbackMessage);
   }
 
   return response.data as T;
 }
 
 export function getErrorMessage(error: unknown, fallbackMessage: string) {
+  if (error instanceof ApiRequestError && error.displayMessage) {
+    return error.displayMessage;
+  }
+
   if (error instanceof Error && error.message && !error.message.startsWith("Request failed:")) {
     return error.message;
   }

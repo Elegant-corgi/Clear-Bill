@@ -6,6 +6,18 @@ export interface RequestOptions extends Omit<RequestInit, 'body'> {
   requestType?: 'form';
 }
 
+export class ApiRequestError extends Error {
+  displayMessage?: string;
+  status: number;
+
+  constructor(message: string, status: number, displayMessage?: string) {
+    super(message);
+    this.name = 'ApiRequestError';
+    this.status = status;
+    this.displayMessage = displayMessage;
+  }
+}
+
 function buildURL(path: string, params?: Record<string, any>) {
   const url = new URL(`${appConfig.apiOrigin}${path}`, 'http://placeholder.local');
   if (params) {
@@ -21,6 +33,18 @@ function buildURL(path: string, params?: Record<string, any>) {
     });
   }
   return `${url.pathname}${url.search}`;
+}
+
+function parseResponsePayload(text: string) {
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return null;
+  }
 }
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -44,10 +68,20 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     headers: nextHeaders,
     body,
   });
+  const text = await response.text();
+  const payload = parseResponsePayload(text);
 
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`);
+    const rawError =
+      payload && typeof payload === 'object' && typeof payload.error === 'string'
+        ? payload.error
+        : `Request failed: ${response.status}`;
+    const displayMessage =
+      payload && typeof payload === 'object' && typeof payload.errorMessage === 'string'
+        ? payload.errorMessage
+        : undefined;
+    throw new ApiRequestError(rawError, response.status, displayMessage);
   }
 
-  return (await response.json()) as T;
+  return payload as T;
 }

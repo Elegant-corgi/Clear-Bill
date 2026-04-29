@@ -69,6 +69,7 @@ declare namespace API {
   interface ResponseResult<T = any> {
     data?: T;
     error?: string;
+    errorMessage?: string;
     success?: boolean;
   }
 
