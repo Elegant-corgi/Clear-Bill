@@ -151,7 +151,10 @@ func writeAuthError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
 		ginx.ResError(c, errors.New("invalid username or password"), 401)
-	case err != nil && (err.Error() == "invalid username or password" || err.Error() == "user is disabled" || err.Error() == "old password is incorrect"):
+	case err != nil && (err.Error() == "invalid username or password" ||
+		err.Error() == "user is disabled" ||
+		err.Error() == "old password is incorrect" ||
+		err.Error() == "new password must be different from old password"):
 		ginx.ResError(c, err, 400)
 	default:
 		ginx.ResError(c, err, 500)

@@ -113,6 +113,9 @@ func (s *AuthService) ChangeOwnPassword(ctx context.Context, userID uint, req *v
 	if err := passwordx.ComparePassword(user.PasswordHash, req.OldPassword); err != nil {
 		return errors.New("old password is incorrect")
 	}
+	if err := passwordx.ComparePassword(user.PasswordHash, req.NewPassword); err == nil {
+		return errors.New("new password must be different from old password")
+	}
 	hash, err := passwordx.HashPassword(req.NewPassword)
 	if err != nil {
 		return err
