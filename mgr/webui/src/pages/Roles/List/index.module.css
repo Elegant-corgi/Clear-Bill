@@ -46,6 +46,32 @@
   gap: 10px !important;
 }
 
+.actions :global(.ant-btn-primary) {
+  border-color: #8fdcbc;
+  background: linear-gradient(180deg, #34c98b 0%, #25bd7e 100%);
+  box-shadow: 0 6px 14px rgba(37, 189, 126, 0.18);
+}
+
+.actions :global(.ant-btn-primary:hover),
+.actions :global(.ant-btn-primary:focus) {
+  border-color: #9ee3c6 !important;
+  background: linear-gradient(180deg, #40d295 0%, #2dc688 100%) !important;
+  box-shadow: 0 8px 16px rgba(45, 198, 136, 0.2) !important;
+}
+
+.actions :global(.ant-btn-default) {
+  border-color: #d7e1ec;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(31, 50, 81, 0.04);
+}
+
+.actions :global(.ant-btn-default:hover),
+.actions :global(.ant-btn-default:focus) {
+  border-color: #bfd0df !important;
+  background: #ffffff !important;
+  color: #17233d !important;
+}
+
 .table :global(.ant-table-thead > tr > th) {
   color: #60708a;
   font-weight: 600;
