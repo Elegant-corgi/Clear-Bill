@@ -14,7 +14,7 @@ import {
   Typography,
 } from "antd";
 import type { TableColumnsType } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { CopyOutlined, PlusOutlined } from "@ant-design/icons";
 
 import {
   tenantsCreate,
@@ -42,6 +42,7 @@ interface TenantFormValues {
 }
 
 const DEFAULT_STATUS = "active";
+const CHINESE_CHARACTER_PATTERN = /[\u3400-\u9fff\uf900-\ufaff]/;
 
 const STATUS_META: Record<string, { color: string; label: string }> = {
   active: {
@@ -76,6 +77,14 @@ function buildUpdatePayload(tenant: API.Tenant, status?: string): API.UpdateTena
     remark: tenant.remark || "",
     status: status ?? tenant.status ?? DEFAULT_STATUS,
   };
+}
+
+function validateNoChineseCharacters(value?: string) {
+  if (!value || !CHINESE_CHARACTER_PATTERN.test(value)) {
+    return Promise.resolve();
+  }
+
+  return Promise.reject(new Error("管理员账号不能包含中文"));
 }
 
 export function TenantListPage() {
@@ -184,20 +193,45 @@ export function TenantListPage() {
         const data = unwrapResponse(response, "创建租户失败");
         message.success("租户创建成功");
         modal.success({
+          className: styles.successModal,
           title: "租户创建成功",
           content: (
             <div className={styles.successContent}>
               <p>
-                租户名称：
-                <strong>{data.tenant.name}</strong>
+                <span className={styles.successLabel}>租户名称：</span>
+                <span className={styles.successValue}>{data.tenant.name}</span>
               </p>
               <p>
-                管理员账号：
-                <strong>{data.adminUsername}</strong>
+                <span className={styles.successLabel}>管理员账号：</span>
+                <span className={styles.successValueGroup}>
+                  <span className={styles.successValue}>{data.adminUsername}</span>
+                  <Button
+                    type="text"
+                    size="small"
+                    className={styles.copyButton}
+                    icon={<CopyOutlined />}
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(data.adminUsername);
+                      message.success("复制成功");
+                    }}
+                  />
+                </span>
               </p>
               <p>
-                初始密码：
-                <strong>{data.initialPassword}</strong>
+                <span className={styles.successLabel}>初始密码：</span>
+                <span className={styles.successValueGroup}>
+                  <span className={styles.successValue}>{data.initialPassword}</span>
+                  <Button
+                    type="text"
+                    size="small"
+                    className={styles.copyButton}
+                    icon={<CopyOutlined />}
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(data.initialPassword);
+                      message.success("复制成功");
+                    }}
+                  />
+                </span>
               </p>
             </div>
           ),
@@ -469,7 +503,10 @@ export function TenantListPage() {
               <Form.Item<TenantFormValues>
                 label="管理员账号"
                 name="adminUsername"
-                rules={[{ max: 64, message: "管理员账号不能超过 64 个字符" }]}
+                rules={[
+                  { max: 64, message: "管理员账号不能超过 64 个字符" },
+                  { validator: (_, value) => validateNoChineseCharacters(value) },
+                ]}
               >
                 <Input placeholder="留空则按后端规则自动生成" maxLength={64} />
               </Form.Item>

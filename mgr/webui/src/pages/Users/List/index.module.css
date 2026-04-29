@@ -95,6 +95,21 @@
   flex: 0 0 auto;
 }
 
+.disabledActionWrapper {
+  display: inline-flex;
+}
+
+.disabledDeleteButton {
+  padding-inline: 6px;
+  color: #b8c4d3 !important;
+  cursor: not-allowed;
+}
+
+.disabledDeleteButton:global(.ant-btn-link[disabled]),
+.disabledDeleteButton:global(.ant-btn-link[disabled]:hover) {
+  color: #b8c4d3 !important;
+}
+
 .drawerForm {
   padding-top: 8px;
 }
@@ -103,14 +118,91 @@
   padding: 28px 0;
 }
 
+.successModal :global(.ant-modal-confirm-body) {
+  position: relative;
+  display: block;
+}
+
+.successModal :global(.ant-modal-confirm-body > .anticon) {
+  position: absolute;
+  top: 2px;
+  left: 0;
+  margin: 0;
+}
+
+.successModal :global(.ant-modal-confirm-paragraph) {
+  width: 100%;
+}
+
+.successModal :global(.ant-modal-confirm-title) {
+  display: block;
+  min-height: 32px;
+  padding-left: 28px;
+}
+
+.successModal :global(.ant-modal-confirm-content) {
+  margin-top: 12px !important;
+}
+
 .successContent p {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 320px;
+  max-width: 100%;
+  min-height: 42px;
   margin: 0 0 8px;
+  padding: 0 12px 0 10px;
+  border: 1px solid #dfe8f1;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #4f5f78;
+  line-height: 1.6;
+  box-shadow: 0 4px 12px rgba(28, 43, 70, 0.05);
+}
+
+.successContent p:last-child {
+  margin-bottom: 0;
+}
+
+.successLabel {
+  flex: 0 0 88px;
   color: #4f5f78;
 }
 
-.successContent strong {
-  margin-left: 6px;
+.successValue {
   color: #17233d;
+  font-weight: 700;
+  text-align: left;
+  word-break: break-all;
+}
+
+.successValueGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-start;
+}
+
+.copyButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 999px;
+  color: #1f8f87;
+  background: #eef8f6;
+  flex-shrink: 0;
+}
+
+.copyButton:hover,
+.copyButton:focus {
+  color: #17766f;
+  background: #e1f3ef;
 }
 
 @media (max-width: 992px) {

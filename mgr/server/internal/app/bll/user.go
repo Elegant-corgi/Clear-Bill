@@ -52,6 +52,10 @@ func (s *UserService) ListUsers(ctx context.Context, actor *dbmodel.User, req *v
 }
 
 func (s *UserService) CreateUser(ctx context.Context, actor *dbmodel.User, req *vo.CreateUserReq) (*vo.CreateUserResp, error) {
+	if containsChineseCharacters(req.Username) {
+		return nil, errors.New("登录账号不能包含中文")
+	}
+
 	role, tenantID, err := s.RoleService.ValidateRoleAssignment(ctx, actor, req.Role, req.TenantID)
 	if err != nil {
 		return nil, err
@@ -154,6 +158,9 @@ func (s *UserService) ResetPassword(ctx context.Context, actor *dbmodel.User, id
 	}
 	if !canManage {
 		return errors.New("permission denied")
+	}
+	if err := passwordx.ComparePassword(user.PasswordHash, req.NewPassword); err == nil {
+		return errors.New("new password must be different from old password")
 	}
 	hash, err := passwordx.HashPassword(req.NewPassword)
 	if err != nil {

@@ -37,6 +37,7 @@ var errorMessageMap = map[string]string{
 	"invalid username or password":      "\u8d26\u53f7\u6216\u5bc6\u7801\u9519\u8bef",
 	"user is disabled":                  "\u5f53\u524d\u8d26\u53f7\u5df2\u88ab\u7981\u7528\uff0c\u8bf7\u8054\u7cfb\u7ba1\u7406\u5458",
 	"old password is incorrect":         "\u539f\u5bc6\u7801\u8f93\u5165\u4e0d\u6b63\u786e",
+	"new password must be different from old password": "\u65b0\u5bc6\u7801\u4e0d\u80fd\u4e0e\u539f\u5bc6\u7801\u76f8\u540c",
 	"invalid role id":                   "\u89d2\u8272 ID \u4e0d\u5408\u6cd5",
 	"role not found":                    "\u89d2\u8272\u4e0d\u5b58\u5728\u6216\u5df2\u88ab\u5220\u9664",
 	"invalid tenant id":                 "\u79df\u6237 ID \u4e0d\u5408\u6cd5",
