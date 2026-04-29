@@ -19,6 +19,18 @@ const appTheme: ThemeConfig = {
     colorTextBase: "#17233d",
     fontFamily: '"Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif',
   },
+  components: {
+    Select: {
+      optionSelectedBg: "#eefaf4",
+      optionActiveBg: "#f7fbf9",
+      optionSelectedColor: "#17233d",
+      selectorBg: "#ffffff",
+      colorBgElevated: "#ffffff",
+      colorTextPlaceholder: "#a0aec0",
+      activeBorderColor: defaultSettings.primaryColor,
+      hoverBorderColor: "#7fdab2",
+    },
+  },
 };
 
 export default function App() {
