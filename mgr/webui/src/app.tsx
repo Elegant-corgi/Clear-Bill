@@ -20,6 +20,23 @@ const appTheme: ThemeConfig = {
     fontFamily: '"Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif',
   },
   components: {
+    Input: {
+      activeBg: "#ffffff",
+      hoverBg: "#ffffff",
+      addonBg: "#ffffff",
+      colorBgContainer: "#ffffff",
+      colorTextPlaceholder: "#a0aec0",
+      activeBorderColor: defaultSettings.primaryColor,
+      hoverBorderColor: "#cfd8e3",
+    },
+    Table: {
+      colorBgContainer: "#ffffff",
+      headerBg: "#f8fbff",
+      headerColor: "#60708a",
+      rowHoverBg: "#f9fcff",
+      borderColor: "#edf2f7",
+      footerBg: "#ffffff",
+    },
     Select: {
       optionSelectedBg: "#eefaf4",
       optionActiveBg: "#f7fbf9",
