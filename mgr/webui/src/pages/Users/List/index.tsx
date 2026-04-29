@@ -343,9 +343,11 @@ export function UserListPage() {
       width: 200,
       render: (_, record) => (
         <Space size={0} className={styles.actionGroup}>
-          <Button type="link" className="ui-action-link ui-action-edit" onClick={() => handleOpenEdit(record)}>
-            编辑
-          </Button>
+          {!sysadmin ? (
+            <Button type="link" className="ui-action-link ui-action-edit" onClick={() => handleOpenEdit(record)}>
+              编辑
+            </Button>
+          ) : null}
           <Button type="link" className="ui-action-link ui-action-reset" onClick={() => handleOpenResetPassword(record)}>
             重置密码
           </Button>
