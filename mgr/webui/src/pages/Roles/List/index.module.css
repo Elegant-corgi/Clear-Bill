@@ -1,0 +1,125 @@
+.page {
+  min-width: 0;
+}
+
+.card {
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e7edf6;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(28, 43, 70, 0.04);
+}
+
+.toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.searchForm {
+  display: flex;
+  flex: 0 1 auto;
+  justify-content: flex-end;
+  gap: 12px 0;
+}
+
+.searchItem {
+  min-width: 0;
+  margin-right: 0 !important;
+}
+
+.searchItem :global(.ant-form-item-control) {
+  min-width: 280px;
+}
+
+.searchItem {
+  margin-right: 8px !important;
+}
+
+.actions {
+  margin-right: 0 !important;
+}
+
+.actions :global(.ant-space) {
+  gap: 10px !important;
+}
+
+.table :global(.ant-table-thead > tr > th) {
+  color: #60708a;
+  font-weight: 600;
+  background: #f8fbff;
+}
+
+.table :global(.ant-table-tbody > tr > td) {
+  color: #25324a;
+}
+
+.drawerForm {
+  padding-top: 8px;
+}
+
+.emptyState {
+  padding: 28px 0;
+}
+
+.permissionGroup {
+  display: grid;
+  gap: 18px;
+}
+
+.permissionSection {
+  padding: 14px 16px;
+  border: 1px solid #e7edf6;
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.permissionSection :global(.ant-typography) {
+  margin-bottom: 12px !important;
+}
+
+.permissionList {
+  width: 100%;
+}
+
+.permissionItem {
+  display: inline-grid;
+  gap: 2px;
+  margin-left: 6px;
+}
+
+.permissionItem strong {
+  color: #25324a;
+  font-size: 13px;
+}
+
+.permissionItem span {
+  color: #6e7f97;
+  font-size: 12px;
+}
+
+@media (max-width: 992px) {
+  .card {
+    padding: 18px;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchForm {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .searchItem {
+    width: 100%;
+  }
+
+  .searchItem :global(.ant-form-item-control) {
+    min-width: 0;
+  }
+}

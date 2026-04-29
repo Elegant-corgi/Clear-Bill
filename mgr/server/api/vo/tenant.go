@@ -3,15 +3,17 @@ package vo
 import "time"
 
 type Tenant struct {
-	ID           uint      `json:"id"`
-	Code         string    `json:"code"`
-	Name         string    `json:"name"`
-	ContactName  string    `json:"contactName"`
-	ContactPhone string    `json:"contactPhone"`
-	Status       string    `json:"status"`
-	Remark       string    `json:"remark"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
+	ID               uint      `json:"id"`
+	Code             string    `json:"code"`
+	Name             string    `json:"name"`
+	AdminUsername    string    `json:"adminUsername"`
+	AdminDisplayName string    `json:"adminDisplayName"`
+	ContactName      string    `json:"contactName"`
+	ContactPhone     string    `json:"contactPhone"`
+	Status           string    `json:"status"`
+	Remark           string    `json:"remark"`
+	CreatedAt        time.Time `json:"createdAt"`
+	UpdatedAt        time.Time `json:"updatedAt"`
 }
 
 type CreateTenantReq struct {

@@ -8,7 +8,7 @@ export async function usersList(
   params: API.usersListParams,
   options?: { [key: string]: any }
 ) {
-  return request<any>("/api/v1/users", {
+  return request<API.ResponseResult<API.User[]>>("/api/v1/users", {
     method: "GET",
     params: {
       ...params,
@@ -22,7 +22,7 @@ export async function usersCreate(
   body: API.CreateUserReq,
   options?: { [key: string]: any }
 ) {
-  return request<any>("/api/v1/users", {
+  return request<API.ResponseResult<API.CreateUserResp>>("/api/v1/users", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -39,7 +39,7 @@ export async function usersGet(
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params;
-  return request<any>(`/api/v1/users/${param0}`, {
+  return request<API.ResponseResult<API.User>>(`/api/v1/users/${param0}`, {
     method: "GET",
     params: { ...queryParams },
     ...(options || {}),
@@ -54,7 +54,7 @@ export async function usersUpdate(
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params;
-  return request<any>(`/api/v1/users/${param0}`, {
+  return request<API.ResponseResult<API.User>>(`/api/v1/users/${param0}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -72,7 +72,7 @@ export async function usersDelete(
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params;
-  return request<any>(`/api/v1/users/${param0}`, {
+  return request<API.ResponseResult<unknown>>(`/api/v1/users/${param0}`, {
     method: "DELETE",
     params: { ...queryParams },
     ...(options || {}),
@@ -87,7 +87,7 @@ export async function usersPasswordReset(
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params;
-  return request<any>(`/api/v1/users/${param0}/password`, {
+  return request<API.ResponseResult<unknown>>(`/api/v1/users/${param0}/password`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

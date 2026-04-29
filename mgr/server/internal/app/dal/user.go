@@ -186,3 +186,61 @@ func (d *UserDAL) CountByRole(ctx context.Context, role string) (int64, error) {
 	}
 	return count, nil
 }
+
+type TenantAdminInfo struct {
+	Username    string
+	DisplayName string
+}
+
+func (d *UserDAL) ListTenantAdminInfos(ctx context.Context, tenantIDs []uint) (map[uint]TenantAdminInfo, error) {
+	result := make(map[uint]TenantAdminInfo, len(tenantIDs))
+	if len(tenantIDs) == 0 {
+		return result, nil
+	}
+
+	if d.DB == nil {
+		d.mu.Lock()
+		defer d.mu.Unlock()
+
+		for _, user := range d.items {
+			if user.Role != dbmodel.RoleTenantAdmin || user.TenantID == nil {
+				continue
+			}
+			for _, tenantID := range tenantIDs {
+				if *user.TenantID == tenantID {
+					if _, exists := result[tenantID]; !exists {
+						result[tenantID] = TenantAdminInfo{
+							Username:    user.Username,
+							DisplayName: user.DisplayName,
+						}
+					}
+					break
+				}
+			}
+		}
+
+		return result, nil
+	}
+
+	var users []dbmodel.User
+	if err := d.DB.WithContext(ctx).
+		Where("role = ? AND tenant_id IN ?", dbmodel.RoleTenantAdmin, tenantIDs).
+		Order("id asc").
+		Find(&users).Error; err != nil {
+		return nil, err
+	}
+
+	for _, user := range users {
+		if user.TenantID == nil {
+			continue
+		}
+		if _, exists := result[*user.TenantID]; !exists {
+			result[*user.TenantID] = TenantAdminInfo{
+				Username:    user.Username,
+				DisplayName: user.DisplayName,
+			}
+		}
+	}
+
+	return result, nil
+}

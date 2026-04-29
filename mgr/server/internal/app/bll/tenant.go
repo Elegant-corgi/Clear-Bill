@@ -65,7 +65,7 @@ func (s *TenantService) CreateTenant(ctx context.Context, req *vo.CreateTenantRe
 	}
 
 	return &vo.CreateTenantResp{
-		Tenant:          *toTenantVO(tenant),
+		Tenant:          *toTenantVO(tenant, adminUsername, adminDisplayName),
 		AdminUsername:   adminUsername,
 		InitialPassword: dbmodel.DefaultUserPassword,
 	}, nil
@@ -77,9 +77,20 @@ func (s *TenantService) ListTenants(ctx context.Context, req *vo.ListTenantReq) 
 		return nil, err
 	}
 
+	tenantIDs := make([]uint, 0, len(tenants))
+	for i := range tenants {
+		tenantIDs = append(tenantIDs, tenants[i].ID)
+	}
+
+	adminInfos, err := s.UserDAL.ListTenantAdminInfos(ctx, tenantIDs)
+	if err != nil {
+		return nil, err
+	}
+
 	result := make([]vo.Tenant, 0, len(tenants))
 	for i := range tenants {
-		result = append(result, *toTenantVO(&tenants[i]))
+		adminInfo := adminInfos[tenants[i].ID]
+		result = append(result, *toTenantVO(&tenants[i], adminInfo.Username, adminInfo.DisplayName))
 	}
 
 	return result, nil
@@ -91,7 +102,13 @@ func (s *TenantService) GetTenant(ctx context.Context, id uint) (*vo.Tenant, err
 		return nil, err
 	}
 
-	return toTenantVO(tenant), nil
+	adminInfos, err := s.UserDAL.ListTenantAdminInfos(ctx, []uint{id})
+	if err != nil {
+		return nil, err
+	}
+
+	adminInfo := adminInfos[id]
+	return toTenantVO(tenant, adminInfo.Username, adminInfo.DisplayName), nil
 }
 
 func (s *TenantService) UpdateTenant(ctx context.Context, id uint, req *vo.UpdateTenantReq) (*vo.Tenant, error) {
@@ -114,7 +131,13 @@ func (s *TenantService) UpdateTenant(ctx context.Context, id uint, req *vo.Updat
 		return nil, err
 	}
 
-	return toTenantVO(tenant), nil
+	adminInfos, err := s.UserDAL.ListTenantAdminInfos(ctx, []uint{id})
+	if err != nil {
+		return nil, err
+	}
+
+	adminInfo := adminInfos[id]
+	return toTenantVO(tenant, adminInfo.Username, adminInfo.DisplayName), nil
 }
 
 func (s *TenantService) DeleteTenant(ctx context.Context, id uint) error {
@@ -126,16 +149,18 @@ func (s *TenantService) DeleteTenant(ctx context.Context, id uint) error {
 	return s.TenantDAL.Delete(ctx, id)
 }
 
-func toTenantVO(tenant *dbmodel.Tenant) *vo.Tenant {
+func toTenantVO(tenant *dbmodel.Tenant, adminUsername, adminDisplayName string) *vo.Tenant {
 	return &vo.Tenant{
-		ID:           tenant.ID,
-		Code:         tenant.Code,
-		Name:         tenant.Name,
-		ContactName:  tenant.ContactName,
-		ContactPhone: tenant.ContactPhone,
-		Status:       tenant.Status,
-		Remark:       tenant.Remark,
-		CreatedAt:    tenant.CreatedAt,
-		UpdatedAt:    tenant.UpdatedAt,
+		ID:               tenant.ID,
+		Code:             tenant.Code,
+		Name:             tenant.Name,
+		AdminUsername:    adminUsername,
+		AdminDisplayName: adminDisplayName,
+		ContactName:      tenant.ContactName,
+		ContactPhone:     tenant.ContactPhone,
+		Status:           tenant.Status,
+		Remark:           tenant.Remark,
+		CreatedAt:        tenant.CreatedAt,
+		UpdatedAt:        tenant.UpdatedAt,
 	}
 }

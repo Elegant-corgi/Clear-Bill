@@ -27,6 +27,12 @@ declare namespace API {
     status?: string;
   }
 
+  interface CreateTenantResp {
+    adminUsername: string;
+    initialPassword: string;
+    tenant: Tenant;
+  }
+
   interface CreateUserReq {
     displayName: string;
     role: string;
@@ -35,68 +41,59 @@ declare namespace API {
     username: string;
   }
 
+  interface CreateUserResp {
+    initialPassword: string;
+    user: User;
+  }
+
   interface LoginReq {
     password: string;
     username: string;
+  }
+
+  interface LoginResp {
+    user: User;
+  }
+
+  interface Permission {
+    id: string;
+    method: string;
+    path: string;
+    tag: string;
   }
 
   interface ResetPasswordReq {
     newPassword: string;
   }
 
-  interface ResponseResult {
-    data?: any;
+  interface ResponseResult<T = any> {
+    data?: T;
     error?: string;
     success?: boolean;
   }
 
-  interface rolesDeleteParams {
-    /** 角色ID */
+  interface Role {
+    builtin: boolean;
+    code: string;
+    createdAt: string;
     id: number;
-  }
-
-  interface rolesGetParams {
-    /** 角色ID */
-    id: number;
-  }
-
-  interface rolesListParams {
-    /** 关键字 */
-    keyword?: string;
-    /** 角色作用域 */
-    scope?: string;
-    /** 租户ID */
+    name: string;
+    permissionIds: string[];
+    scope: string;
     tenantId?: number;
+    updatedAt: string;
   }
 
-  interface rolesPermissionsUpdateParams {
-    /** 角色ID */
+  interface Tenant {
+    code: string;
+    contactName: string;
+    contactPhone: string;
+    createdAt: string;
     id: number;
-  }
-
-  interface rolesUpdateParams {
-    /** 角色ID */
-    id: number;
-  }
-
-  interface tenantsDeleteParams {
-    /** 租户ID */
-    id: number;
-  }
-
-  interface tenantsGetParams {
-    /** 租户ID */
-    id: number;
-  }
-
-  interface tenantsListParams {
-    /** 关键字 */
-    keyword?: string;
-  }
-
-  interface tenantsUpdateParams {
-    /** 租户ID */
-    id: number;
+    name: string;
+    remark: string;
+    status: string;
+    updatedAt: string;
   }
 
   interface UpdateRolePermissionsReq {
@@ -123,30 +120,73 @@ declare namespace API {
     tenantId?: number;
   }
 
+  interface User {
+    createdAt: string;
+    displayName: string;
+    id: number;
+    role: string;
+    status: string;
+    tenantId?: number;
+    updatedAt: string;
+    username: string;
+  }
+
+  interface rolesDeleteParams {
+    id: number;
+  }
+
+  interface rolesGetParams {
+    id: number;
+  }
+
+  interface rolesListParams {
+    keyword?: string;
+    scope?: string;
+    tenantId?: number;
+  }
+
+  interface rolesPermissionsUpdateParams {
+    id: number;
+  }
+
+  interface rolesUpdateParams {
+    id: number;
+  }
+
+  interface tenantsDeleteParams {
+    id: number;
+  }
+
+  interface tenantsGetParams {
+    id: number;
+  }
+
+  interface tenantsListParams {
+    keyword?: string;
+  }
+
+  interface tenantsUpdateParams {
+    id: number;
+  }
+
   interface usersDeleteParams {
-    /** 用户ID */
     id: number;
   }
 
   interface usersGetParams {
-    /** 用户ID */
     id: number;
   }
 
   interface usersListParams {
-    /** 关键字 */
     keyword?: string;
-    /** 租户ID */
     tenantId?: number;
   }
 
   interface usersPasswordResetParams {
-    /** 用户ID */
     id: number;
   }
 
   interface usersUpdateParams {
-    /** 用户ID */
     id: number;
   }
 }
