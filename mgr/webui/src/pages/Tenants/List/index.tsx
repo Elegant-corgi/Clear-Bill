@@ -14,6 +14,7 @@ import {
   Typography,
 } from "antd";
 import type { TableColumnsType } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 
 import {
   tenantsCreate,
@@ -329,7 +330,7 @@ export function TenantListPage() {
 
         return (
           <Space size={0} className={styles.actionGroup}>
-            <Button type="link" onClick={() => handleOpenEdit(record)}>
+            <Button type="link" className="ui-action-link ui-action-edit" onClick={() => handleOpenEdit(record)}>
               编辑
             </Button>
             <Popconfirm
@@ -338,7 +339,12 @@ export function TenantListPage() {
               cancelText="取消"
               onConfirm={() => handleToggleStatus(record, nextStatus)}
             >
-              <Button type="link">{actionText}</Button>
+              <Button
+                type="link"
+                className={`ui-action-link ${nextStatus === "active" ? "ui-action-enable" : "ui-action-disable"}`}
+              >
+                {actionText}
+              </Button>
             </Popconfirm>
             <Popconfirm
               title="删除后不可恢复，确认删除该租户吗？"
@@ -347,7 +353,7 @@ export function TenantListPage() {
               okButtonProps={{ danger: true }}
               onConfirm={() => handleDelete(record)}
             >
-              <Button danger type="link">
+              <Button type="link" className="ui-action-link ui-action-delete">
                 删除
               </Button>
             </Popconfirm>
@@ -382,7 +388,7 @@ export function TenantListPage() {
             </Form.Item>
           </Form>
 
-          <Button type="primary" ghost onClick={handleOpenCreate}>
+          <Button type="primary" ghost icon={<PlusOutlined />} onClick={handleOpenCreate}>
             新建租户
           </Button>
         </div>
