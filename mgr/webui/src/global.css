@@ -395,6 +395,7 @@ textarea.ant-input[disabled],
 
 .shell__profile-text {
   display: grid;
+  row-gap: 3px;
   line-height: 1.25;
   text-align: left;
 }
