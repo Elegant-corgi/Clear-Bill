@@ -30,6 +30,7 @@ import {
 } from "@/services/clear-bill/user";
 import { formatDateTime, getErrorMessage, unwrapResponse } from "@/utils/api";
 import { isSysadmin, isTenantAdmin } from "@/utils/access";
+import { PAGE_SIZE_OPTIONS, getPageAfterDelete, useTablePagination } from "@/utils/pagination";
 
 import styles from "./index.module.css";
 
@@ -71,6 +72,15 @@ function validateNoChineseCharacters(value?: string) {
   return Promise.reject(new Error("登录账号不能包含中文"));
 }
 
+function createEmptyPageResult<T>(): API.PageResult<T> {
+  return {
+    list: [],
+    page: 1,
+    pageSize: 1000,
+    total: 0,
+  };
+}
+
 export function UserListPage() {
   const { message, modal } = App.useApp();
   const { user: currentUser } = useAuth();
@@ -88,6 +98,7 @@ export function UserListPage() {
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<API.User | null>(null);
   const [passwordTarget, setPasswordTarget] = useState<API.User | null>(null);
+  const { pagination, resetPage, updatePageData, handleTableChange } = useTablePagination();
   const selectedRoleCode = Form.useWatch("role", userForm);
 
   const sysadmin = isSysadmin(currentUser);
@@ -120,21 +131,30 @@ export function UserListPage() {
   const loadBaseData = async () => {
     try {
       const [roleResponse, tenantResponse] = await Promise.all([
-        rolesList({}),
-        sysadmin ? tenantsList({}) : Promise.resolve({ success: true, data: [] as API.Tenant[] }),
+        rolesList({ page: 1, pageSize: 1000 }),
+        sysadmin ? tenantsList({ page: 1, pageSize: 1000 }) : Promise.resolve({ success: true, data: createEmptyPageResult<API.Tenant>() }),
       ]);
-      setRoles(unwrapResponse(roleResponse, "获取角色列表失败") ?? []);
-      setTenants(unwrapResponse(tenantResponse, "获取租户列表失败") ?? []);
+      const roleData = unwrapResponse(roleResponse, "获取角色列表失败");
+      const tenantData = unwrapResponse(tenantResponse, "获取租户列表失败");
+      setRoles(roleData.list ?? []);
+      setTenants(tenantData.list ?? []);
     } catch (error) {
       message.error(getErrorMessage(error, "初始化用户页数据失败"));
     }
   };
 
-  const loadUsers = async (nextKeyword = keyword) => {
+  const loadUsers = async (options?: { keyword?: string; page?: number; pageSize?: number }) => {
     setLoading(true);
     try {
-      const response = await usersList(nextKeyword ? { keyword: nextKeyword } : {});
-      setUsers(unwrapResponse(response, "获取用户列表失败") ?? []);
+      const nextKeyword = options?.keyword ?? keyword;
+      const response = await usersList({
+        ...(nextKeyword ? { keyword: nextKeyword } : {}),
+        page: options?.page ?? pagination.page,
+        pageSize: options?.pageSize ?? pagination.pageSize,
+      });
+      const data = unwrapResponse(response, "获取用户列表失败");
+      setUsers(data.list ?? []);
+      updatePageData(data);
     } catch (error) {
       message.error(getErrorMessage(error, "获取用户列表失败"));
     } finally {
@@ -143,19 +163,21 @@ export function UserListPage() {
   };
 
   useEffect(() => {
-    void Promise.all([loadBaseData(), loadUsers("")]);
+    void Promise.all([loadBaseData(), loadUsers({ keyword: "", page: 1 })]);
   }, []);
 
   const handleSearch = async (values: SearchFormValues) => {
     const nextKeyword = values.keyword?.trim() ?? "";
     setKeyword(nextKeyword);
-    await loadUsers(nextKeyword);
+    resetPage();
+    await loadUsers({ keyword: nextKeyword, page: 1 });
   };
 
   const handleReset = async () => {
     searchForm.resetFields();
     setKeyword("");
-    await loadUsers("");
+    resetPage();
+    await loadUsers({ keyword: "", page: 1 });
   };
 
   const handleOpenCreate = () => {
@@ -258,7 +280,7 @@ export function UserListPage() {
       }
 
       handleCloseDrawer();
-      await loadUsers(keyword);
+      await loadUsers();
     } catch (error) {
       if (typeof error === "object" && error !== null && "errorFields" in error) {
         return;
@@ -276,7 +298,9 @@ export function UserListPage() {
       const response = await usersDelete({ id: target.id });
       unwrapResponse(response, "删除用户失败");
       message.success("用户删除成功");
-      await loadUsers(keyword);
+
+      const nextPage = getPageAfterDelete(pagination.total - 1, pagination.page, pagination.pageSize);
+      await loadUsers({ page: nextPage });
     } catch (error) {
       message.error(getErrorMessage(error, "删除用户失败"));
       setLoading(false);
@@ -460,9 +484,16 @@ export function UserListPage() {
           className={styles.table}
           scroll={{ x: sysadmin ? 1400 : 1180 }}
           pagination={{
-            pageSize: 10,
-            showSizeChanger: false,
+            current: pagination.page,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: true,
+            pageSizeOptions: PAGE_SIZE_OPTIONS.map(String),
             showTotal: (total) => `共 ${total} 条`,
+            onChange: (page, pageSize) => {
+              handleTableChange(page, pageSize);
+              void loadUsers({ page, pageSize });
+            },
           }}
           locale={{
             emptyText: (

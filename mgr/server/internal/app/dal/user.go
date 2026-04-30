@@ -69,11 +69,13 @@ func (d *UserDAL) Create(ctx context.Context, user *dbmodel.User) error {
 	return d.DB.WithContext(ctx).Create(user).Error
 }
 
-func (d *UserDAL) List(ctx context.Context, keyword string, tenantID *uint) ([]dbmodel.User, error) {
+func (d *UserDAL) List(ctx context.Context, keyword string, tenantID *uint, page, pageSize int) ([]dbmodel.User, PageQuery, int64, error) {
+	query := NewPageQuery(page, pageSize)
+
 	if d.DB == nil {
 		d.mu.Lock()
 		defer d.mu.Unlock()
-		result := make([]dbmodel.User, 0, len(d.items))
+		filtered := make([]dbmodel.User, 0, len(d.items))
 		for _, user := range d.items {
 			if tenantID != nil {
 				if user.TenantID == nil || *user.TenantID != *tenantID {
@@ -81,10 +83,22 @@ func (d *UserDAL) List(ctx context.Context, keyword string, tenantID *uint) ([]d
 				}
 			}
 			if keyword == "" || containsInsensitive(user.Username, keyword) || containsInsensitive(user.DisplayName, keyword) {
-				result = append(result, user)
+				filtered = append(filtered, user)
 			}
 		}
-		return result, nil
+
+		total := int64(len(filtered))
+		start := query.Offset()
+		if start >= len(filtered) {
+			return []dbmodel.User{}, query, total, nil
+		}
+
+		end := start + query.PageSize
+		if end > len(filtered) {
+			end = len(filtered)
+		}
+
+		return filtered[start:end], query, total, nil
 	}
 
 	var users []dbmodel.User
@@ -96,10 +110,11 @@ func (d *UserDAL) List(ctx context.Context, keyword string, tenantID *uint) ([]d
 		like := "%" + keyword + "%"
 		tx = tx.Where("username LIKE ? OR display_name LIKE ?", like, like)
 	}
-	if err := tx.Find(&users).Error; err != nil {
-		return nil, err
+	query, total, err := FindPage(tx, &dbmodel.User{}, page, pageSize, &users)
+	if err != nil {
+		return nil, query, 0, err
 	}
-	return users, nil
+	return users, query, total, nil
 }
 
 func (d *UserDAL) GetByID(ctx context.Context, id uint) (*dbmodel.User, error) {

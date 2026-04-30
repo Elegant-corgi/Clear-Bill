@@ -24,12 +24,13 @@ func NewUserService(userDAL *dal.UserDAL, tenantDAL *dal.TenantDAL, roleService 
 	}
 }
 
-func (s *UserService) ListUsers(ctx context.Context, actor *dbmodel.User, req *vo.ListUserReq) ([]vo.User, error) {
+func (s *UserService) ListUsers(ctx context.Context, actor *dbmodel.User, req *vo.ListUserReq) (*vo.PageResult[vo.User], error) {
 	role, err := s.RoleService.GetActorRole(ctx, actor)
 	if err != nil {
 		return nil, err
 	}
 
+	pageReq := req.PageReq.Normalize()
 	tenantID := req.TenantID
 	switch role.Scope {
 	case dbmodel.RoleScopeSystem:
@@ -39,7 +40,7 @@ func (s *UserService) ListUsers(ctx context.Context, actor *dbmodel.User, req *v
 		return nil, errors.New("permission denied")
 	}
 
-	users, err := s.UserDAL.List(ctx, req.Keyword, tenantID)
+	users, query, total, err := s.UserDAL.List(ctx, req.Keyword, tenantID, pageReq.Page, pageReq.PageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +49,12 @@ func (s *UserService) ListUsers(ctx context.Context, actor *dbmodel.User, req *v
 	for i := range users {
 		result = append(result, ToUserVO(&users[i]))
 	}
-	return result, nil
+	return &vo.PageResult[vo.User]{
+		List:     result,
+		Total:    total,
+		Page:     query.Page,
+		PageSize: query.PageSize,
+	}, nil
 }
 
 func (s *UserService) CreateUser(ctx context.Context, actor *dbmodel.User, req *vo.CreateUserReq) (*vo.CreateUserResp, error) {

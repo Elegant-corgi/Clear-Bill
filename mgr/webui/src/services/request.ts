@@ -47,6 +47,10 @@ function parseResponsePayload(text: string) {
   }
 }
 
+function isResponseErrorPayload(payload: unknown): payload is { error?: string; errorMessage?: string } {
+  return typeof payload === 'object' && payload !== null;
+}
+
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { params, data, headers, requestType, ...rest } = options;
 
@@ -73,11 +77,11 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   if (!response.ok) {
     const rawError =
-      payload && typeof payload === 'object' && typeof payload.error === 'string'
+      isResponseErrorPayload(payload) && typeof payload.error === 'string'
         ? payload.error
         : `Request failed: ${response.status}`;
     const displayMessage =
-      payload && typeof payload === 'object' && typeof payload.errorMessage === 'string'
+      isResponseErrorPayload(payload) && typeof payload.errorMessage === 'string'
         ? payload.errorMessage
         : undefined;
     throw new ApiRequestError(rawError, response.status, displayMessage);

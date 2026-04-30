@@ -2,11 +2,12 @@ package router
 
 import (
 	"clearbill/mgr/server/internal/app/middleware"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (r *Router) RegisterValidator() {

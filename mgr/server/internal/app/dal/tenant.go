@@ -41,19 +41,32 @@ func (d *TenantDAL) Create(ctx context.Context, tenant *dbmodel.Tenant) error {
 	return d.DB.WithContext(ctx).Create(tenant).Error
 }
 
-func (d *TenantDAL) List(ctx context.Context, keyword string) ([]dbmodel.Tenant, error) {
+func (d *TenantDAL) List(ctx context.Context, keyword string, page, pageSize int) ([]dbmodel.Tenant, PageQuery, int64, error) {
+	query := NewPageQuery(page, pageSize)
+
 	if d.DB == nil {
 		d.mu.Lock()
 		defer d.mu.Unlock()
 
-		tenants := make([]dbmodel.Tenant, 0, len(d.items))
+		filtered := make([]dbmodel.Tenant, 0, len(d.items))
 		for _, tenant := range d.items {
 			if keyword == "" || containsInsensitive(tenant.Code, keyword) || containsInsensitive(tenant.Name, keyword) {
-				tenants = append(tenants, tenant)
+				filtered = append(filtered, tenant)
 			}
 		}
 
-		return tenants, nil
+		total := int64(len(filtered))
+		start := query.Offset()
+		if start >= len(filtered) {
+			return []dbmodel.Tenant{}, query, total, nil
+		}
+
+		end := start + query.PageSize
+		if end > len(filtered) {
+			end = len(filtered)
+		}
+
+		return filtered[start:end], query, total, nil
 	}
 
 	var tenants []dbmodel.Tenant
@@ -64,11 +77,12 @@ func (d *TenantDAL) List(ctx context.Context, keyword string) ([]dbmodel.Tenant,
 		tx = tx.Where("code LIKE ? OR name LIKE ?", like, like)
 	}
 
-	if err := tx.Find(&tenants).Error; err != nil {
-		return nil, err
+	query, total, err := FindPage(tx, &dbmodel.Tenant{}, page, pageSize, &tenants)
+	if err != nil {
+		return nil, query, 0, err
 	}
 
-	return tenants, nil
+	return tenants, query, total, nil
 }
 
 func (d *TenantDAL) GetByID(ctx context.Context, id uint) (*dbmodel.Tenant, error) {

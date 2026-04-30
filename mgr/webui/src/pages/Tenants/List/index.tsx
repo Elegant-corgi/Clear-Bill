@@ -23,6 +23,7 @@ import {
   tenantsUpdate,
 } from "@/services/clear-bill/tenant";
 import { formatDateTime, getErrorMessage, unwrapResponse } from "@/utils/api";
+import { PAGE_SIZE_OPTIONS, getPageAfterDelete, useTablePagination } from "@/utils/pagination";
 
 import styles from "./index.module.css";
 
@@ -97,15 +98,22 @@ export function TenantListPage() {
   const [submitting, setSubmitting] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<API.Tenant | null>(null);
+  const { pagination, resetPage, updatePageData, handleTableChange } = useTablePagination();
 
   const isEditMode = Boolean(editingTenant);
 
-  const loadTenants = async (nextKeyword = keyword) => {
+  const loadTenants = async (options?: { keyword?: string; page?: number; pageSize?: number }) => {
     setLoading(true);
     try {
-      const response = await tenantsList(nextKeyword ? { keyword: nextKeyword } : {});
+      const nextKeyword = options?.keyword ?? keyword;
+      const response = await tenantsList({
+        ...(nextKeyword ? { keyword: nextKeyword } : {}),
+        page: options?.page ?? pagination.page,
+        pageSize: options?.pageSize ?? pagination.pageSize,
+      });
       const data = unwrapResponse(response, "获取租户列表失败");
-      setTenants(data ?? []);
+      setTenants(data.list ?? []);
+      updatePageData(data);
     } catch (error) {
       message.error(getErrorMessage(error, "获取租户列表失败"));
     } finally {
@@ -114,19 +122,21 @@ export function TenantListPage() {
   };
 
   useEffect(() => {
-    void loadTenants("");
+    void loadTenants({ keyword: "", page: 1 });
   }, []);
 
   const handleSearch = async (values: SearchFormValues) => {
     const nextKeyword = values.keyword?.trim() ?? "";
     setKeyword(nextKeyword);
-    await loadTenants(nextKeyword);
+    resetPage();
+    await loadTenants({ keyword: nextKeyword, page: 1 });
   };
 
   const handleReset = async () => {
     searchForm.resetFields();
     setKeyword("");
-    await loadTenants("");
+    resetPage();
+    await loadTenants({ keyword: "", page: 1 });
   };
 
   const handleOpenCreate = () => {
@@ -240,7 +250,7 @@ export function TenantListPage() {
       }
 
       handleCloseDrawer();
-      await loadTenants(keyword);
+      await loadTenants();
     } catch (error) {
       if (typeof error === "object" && error !== null && "errorFields" in error) {
         return;
@@ -258,7 +268,7 @@ export function TenantListPage() {
       const response = await tenantsUpdate({ id: tenant.id }, buildUpdatePayload(tenant, status));
       unwrapResponse(response, "更新租户状态失败");
       message.success(`租户已${status === "active" ? "启用" : "停用"}`);
-      await loadTenants(keyword);
+      await loadTenants();
     } catch (error) {
       message.error(getErrorMessage(error, "更新租户状态失败"));
       setLoading(false);
@@ -271,7 +281,8 @@ export function TenantListPage() {
       const response = await tenantsDelete({ id: tenant.id });
       unwrapResponse(response, "删除租户失败");
       message.success("租户删除成功");
-      await loadTenants(keyword);
+      const nextPage = getPageAfterDelete(pagination.total - 1, pagination.page, pagination.pageSize);
+      await loadTenants({ page: nextPage });
     } catch (error) {
       message.error(getErrorMessage(error, "删除租户失败"));
       setLoading(false);
@@ -435,9 +446,16 @@ export function TenantListPage() {
           className={styles.table}
           scroll={{ x: 1680 }}
           pagination={{
-            pageSize: 10,
-            showSizeChanger: false,
+            current: pagination.page,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: true,
+            pageSizeOptions: PAGE_SIZE_OPTIONS.map(String),
             showTotal: (total) => `共 ${total} 条`,
+            onChange: (page, pageSize) => {
+              handleTableChange(page, pageSize);
+              void loadTenants({ page, pageSize });
+            },
           }}
           locale={{
             emptyText: (

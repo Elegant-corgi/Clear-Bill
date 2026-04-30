@@ -1,5 +1,6 @@
 import { App as AntApp, ConfigProvider, theme } from "antd";
 import type { ThemeConfig } from "antd";
+import zhCN from "antd/locale/zh_CN";
 import { RouterProvider } from "react-router-dom";
 
 import defaultSettings from "@config/defaultSettings";
@@ -58,7 +59,7 @@ export default function App() {
   }
 
   return (
-    <ConfigProvider theme={appTheme}>
+    <ConfigProvider theme={appTheme} locale={zhCN}>
       <AntApp>
         <AuthProvider>
           <RouterProvider router={router} />
