@@ -25,7 +25,7 @@ func NewUserAction(userService *bll.UserService) *UserAction {
 
 // CreateUser 创建用户
 // @Summary  创建用户
-// @Description  仅超管和租户管理员可创建用户，默认密码为 bill123;
+// @Description  仅超管和租户管理员可创建用户，默认密码为 stor123;
 // @Accept   json
 // @Produce  json
 // @Param    body  body      vo.CreateUserReq   true  "body参数"

@@ -122,7 +122,7 @@ func TestBillsEndpoint(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	handler := gin.New()
 	newTestRouter().Register(handler)
-	sysadminSession := loginSession(t, handler, "sysadmin", "bill123;")
+	sysadminSession := loginSession(t, handler, "sysadmin", "stor123;")
 	request := authorizedJSONRequest(http.MethodGet, "/api/v1/bills", sysadminSession, "")
 	recorder := httptest.NewRecorder()
 
@@ -150,7 +150,7 @@ func TestAuthTenantAndUserFlow(t *testing.T) {
 	handler := gin.New()
 	newTestRouter().Register(handler)
 
-	sysadminSession := loginSession(t, handler, "sysadmin", "bill123;")
+	sysadminSession := loginSession(t, handler, "sysadmin", "stor123;")
 
 	createTenantReq := authorizedJSONRequest(
 		http.MethodPost,
@@ -175,7 +175,7 @@ func TestAuthTenantAndUserFlow(t *testing.T) {
 		t.Fatalf("expected tenant admin username")
 	}
 
-	tenantAdminSession := loginSession(t, handler, tenantPayload.Data.AdminUsername, "bill123;")
+	tenantAdminSession := loginSession(t, handler, tenantPayload.Data.AdminUsername, "stor123;")
 
 	createUserReq := authorizedJSONRequest(
 		http.MethodPost,
@@ -197,13 +197,13 @@ func TestAuthTenantAndUserFlow(t *testing.T) {
 		t.Fatalf("failed to parse user response: %v", err)
 	}
 
-	userSession := loginSession(t, handler, "alice", "bill123;")
+	userSession := loginSession(t, handler, "alice", "stor123;")
 
 	changeOwnPasswordReq := authorizedJSONRequest(
 		http.MethodPut,
 		"/api/v1/auth/password",
 		userSession,
-		`{"oldPassword":"bill123;","newPassword":"newpass123"}`,
+		`{"oldPassword":"stor123;","newPassword":"newpass123"}`,
 	)
 	changeOwnPasswordResp := httptest.NewRecorder()
 	handler.ServeHTTP(changeOwnPasswordResp, changeOwnPasswordReq)
@@ -244,7 +244,7 @@ func TestRBACRolePermissionFlow(t *testing.T) {
 	handler := gin.New()
 	newTestRouter().Register(handler)
 
-	sysadminSession := loginSession(t, handler, "sysadmin", "bill123;")
+	sysadminSession := loginSession(t, handler, "sysadmin", "stor123;")
 
 	createTenantReq := authorizedJSONRequest(
 		http.MethodPost,
@@ -266,7 +266,7 @@ func TestRBACRolePermissionFlow(t *testing.T) {
 		t.Fatalf("failed to parse tenant response: %v", err)
 	}
 
-	tenantAdminSession := loginSession(t, handler, tenantPayload.Data.AdminUsername, "bill123;")
+	tenantAdminSession := loginSession(t, handler, tenantPayload.Data.AdminUsername, "stor123;")
 
 	listPermissionsReq := authorizedJSONRequest(http.MethodGet, "/api/v1/permissions", tenantAdminSession, "")
 	listPermissionsResp := httptest.NewRecorder()
@@ -313,7 +313,7 @@ func TestRBACRolePermissionFlow(t *testing.T) {
 		t.Fatalf("expected 200, got %d body=%s", createUserResp.Code, createUserResp.Body.String())
 	}
 
-	bobSession := loginSession(t, handler, "bob", "bill123;")
+	bobSession := loginSession(t, handler, "bob", "stor123;")
 
 	listUsersReq := authorizedJSONRequest(http.MethodGet, "/api/v1/users", bobSession, "")
 	listUsersResp := httptest.NewRecorder()

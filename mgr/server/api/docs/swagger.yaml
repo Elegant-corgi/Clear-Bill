@@ -661,7 +661,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 仅超管和租户管理员可创建用户，默认密码为 bill123;
+      description: 仅超管和租户管理员可创建用户，默认密码为 stor123;
       operationId: users-create
       parameters:
       - description: body参数
