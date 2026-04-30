@@ -4,7 +4,7 @@ import { request } from "../request";
 
 /** 查询权限列表 返回基于 Swagger 接口注解生成的权限列表 GET /api/v1/permissions */
 export async function permissionsList(options?: { [key: string]: any }) {
-  return request<API.ResponseResult<API.Permission[]>>("/api/v1/permissions", {
+  return request<any>("/api/v1/permissions", {
     method: "GET",
     ...(options || {}),
   });
@@ -16,7 +16,7 @@ export async function rolesList(
   params: API.rolesListParams,
   options?: { [key: string]: any }
 ) {
-  return request<API.ResponseResult<API.Role[]>>("/api/v1/roles", {
+  return request<any>("/api/v1/roles", {
     method: "GET",
     params: {
       ...params,
@@ -30,7 +30,7 @@ export async function rolesCreate(
   body: API.CreateRoleReq,
   options?: { [key: string]: any }
 ) {
-  return request<API.ResponseResult<API.Role>>("/api/v1/roles", {
+  return request<any>("/api/v1/roles", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -47,7 +47,7 @@ export async function rolesGet(
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params;
-  return request<API.ResponseResult<API.Role>>(`/api/v1/roles/${param0}`, {
+  return request<any>(`/api/v1/roles/${param0}`, {
     method: "GET",
     params: { ...queryParams },
     ...(options || {}),
@@ -62,7 +62,7 @@ export async function rolesUpdate(
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params;
-  return request<API.ResponseResult<API.Role>>(`/api/v1/roles/${param0}`, {
+  return request<any>(`/api/v1/roles/${param0}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -80,7 +80,7 @@ export async function rolesDelete(
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params;
-  return request<API.ResponseResult<unknown>>(`/api/v1/roles/${param0}`, {
+  return request<any>(`/api/v1/roles/${param0}`, {
     method: "DELETE",
     params: { ...queryParams },
     ...(options || {}),
@@ -95,7 +95,7 @@ export async function rolesPermissionsUpdate(
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params;
-  return request<API.ResponseResult<API.Role>>(`/api/v1/roles/${param0}/permissions`, {
+  return request<any>(`/api/v1/roles/${param0}/permissions`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

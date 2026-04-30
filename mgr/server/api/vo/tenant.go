@@ -43,5 +43,6 @@ type UpdateTenantReq struct {
 }
 
 type ListTenantReq struct {
+	PageReq
 	Keyword string `form:"keyword"`
 }

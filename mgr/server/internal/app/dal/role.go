@@ -61,18 +61,40 @@ func (d *RoleDAL) Create(ctx context.Context, role *dbmodel.Role) error {
 	return d.DB.WithContext(ctx).Create(role).Error
 }
 
-func (d *RoleDAL) List(ctx context.Context, keyword string) ([]dbmodel.Role, error) {
+func (d *RoleDAL) List(ctx context.Context, keyword, scope string, tenantID *uint, page, pageSize int) ([]dbmodel.Role, PageQuery, int64, error) {
+	query := NewPageQuery(page, pageSize)
+
 	if d.DB == nil {
 		d.mu.Lock()
 		defer d.mu.Unlock()
 
-		result := make([]dbmodel.Role, 0, len(d.items))
+		filtered := make([]dbmodel.Role, 0, len(d.items))
 		for _, role := range d.items {
+			if scope != "" && role.Scope != scope {
+				continue
+			}
+			if tenantID != nil {
+				if role.Scope != dbmodel.RoleScopeTenant || role.TenantID == nil || *role.TenantID != *tenantID {
+					continue
+				}
+			}
 			if keyword == "" || containsInsensitive(role.Code, keyword) || containsInsensitive(role.Name, keyword) {
-				result = append(result, role)
+				filtered = append(filtered, role)
 			}
 		}
-		return result, nil
+
+		total := int64(len(filtered))
+		start := query.Offset()
+		if start >= len(filtered) {
+			return []dbmodel.Role{}, query, total, nil
+		}
+
+		end := start + query.PageSize
+		if end > len(filtered) {
+			end = len(filtered)
+		}
+
+		return filtered[start:end], query, total, nil
 	}
 
 	var roles []dbmodel.Role
@@ -81,10 +103,17 @@ func (d *RoleDAL) List(ctx context.Context, keyword string) ([]dbmodel.Role, err
 		like := "%" + keyword + "%"
 		tx = tx.Where("code LIKE ? OR name LIKE ?", like, like)
 	}
-	if err := tx.Find(&roles).Error; err != nil {
-		return nil, err
+	if scope != "" {
+		tx = tx.Where("scope = ?", scope)
 	}
-	return roles, nil
+	if tenantID != nil {
+		tx = tx.Where("scope = ? AND tenant_id = ?", dbmodel.RoleScopeTenant, *tenantID)
+	}
+	query, total, err := FindPage(tx, &dbmodel.Role{}, page, pageSize, &roles)
+	if err != nil {
+		return nil, query, 0, err
+	}
+	return roles, query, total, nil
 }
 
 func (d *RoleDAL) GetByID(ctx context.Context, id uint) (*dbmodel.Role, error) {

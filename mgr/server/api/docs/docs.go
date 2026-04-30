@@ -555,7 +555,7 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "执行成功",
                         "schema": {
                             "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
@@ -751,7 +751,7 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "执行成功",
                         "schema": {
                             "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
@@ -1067,6 +1067,9 @@ const docTemplate = `{
             "properties": {
                 "data": {},
                 "error": {
+                    "type": "string"
+                },
+                "errorMessage": {
                     "type": "string"
                 },
                 "success": {

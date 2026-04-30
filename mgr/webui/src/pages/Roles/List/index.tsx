@@ -30,6 +30,7 @@ import {
 import { tenantsList } from "@/services/clear-bill/tenant";
 import { formatDateTime, getErrorMessage, unwrapResponse } from "@/utils/api";
 import { isSysadmin } from "@/utils/access";
+import { PAGE_SIZE_OPTIONS, getPageAfterDelete, useTablePagination } from "@/utils/pagination";
 
 import styles from "./index.module.css";
 
@@ -45,6 +46,15 @@ interface RoleFormValues {
   tenantId?: number;
 }
 
+function createEmptyPageResult<T>(): API.PageResult<T> {
+  return {
+    list: [],
+    page: 1,
+    pageSize: 1000,
+    total: 0,
+  };
+}
+
 export function RoleListPage() {
   const { message } = App.useApp();
   const { user: currentUser } = useAuth();
@@ -58,6 +68,7 @@ export function RoleListPage() {
   const [submitting, setSubmitting] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<API.Role | null>(null);
+  const { pagination, resetPage, updatePageData, handleTableChange } = useTablePagination();
   const scopeValue = Form.useWatch("scope", roleForm);
 
   const sysadmin = isSysadmin(currentUser);
@@ -87,20 +98,27 @@ export function RoleListPage() {
     try {
       const [permissionResponse, tenantResponse] = await Promise.all([
         permissionsList(),
-        sysadmin ? tenantsList({}) : Promise.resolve({ success: true, data: [] as API.Tenant[] }),
+        sysadmin ? tenantsList({ page: 1, pageSize: 1000 }) : Promise.resolve({ success: true, data: createEmptyPageResult<API.Tenant>() }),
       ]);
       setPermissions(unwrapResponse(permissionResponse, "获取权限列表失败") ?? []);
-      setTenants(unwrapResponse(tenantResponse, "获取租户列表失败") ?? []);
+      setTenants(unwrapResponse(tenantResponse, "获取租户列表失败").list ?? []);
     } catch (error) {
       message.error(getErrorMessage(error, "初始化角色页数据失败"));
     }
   };
 
-  const loadRoles = async (nextKeyword = keyword) => {
+  const loadRoles = async (options?: { keyword?: string; page?: number; pageSize?: number }) => {
     setLoading(true);
     try {
-      const response = await rolesList(nextKeyword ? { keyword: nextKeyword } : {});
-      setRoles(unwrapResponse(response, "获取角色列表失败") ?? []);
+      const nextKeyword = options?.keyword ?? keyword;
+      const response = await rolesList({
+        ...(nextKeyword ? { keyword: nextKeyword } : {}),
+        page: options?.page ?? pagination.page,
+        pageSize: options?.pageSize ?? pagination.pageSize,
+      });
+      const data = unwrapResponse(response, "获取角色列表失败");
+      setRoles(data.list ?? []);
+      updatePageData(data);
     } catch (error) {
       message.error(getErrorMessage(error, "获取角色列表失败"));
     } finally {
@@ -109,19 +127,21 @@ export function RoleListPage() {
   };
 
   useEffect(() => {
-    void Promise.all([loadBaseData(), loadRoles("")]);
+    void Promise.all([loadBaseData(), loadRoles({ keyword: "", page: 1 })]);
   }, []);
 
   const handleSearch = async (values: SearchFormValues) => {
     const nextKeyword = values.keyword?.trim() ?? "";
     setKeyword(nextKeyword);
-    await loadRoles(nextKeyword);
+    resetPage();
+    await loadRoles({ keyword: nextKeyword, page: 1 });
   };
 
   const handleReset = async () => {
     searchForm.resetFields();
     setKeyword("");
-    await loadRoles("");
+    resetPage();
+    await loadRoles({ keyword: "", page: 1 });
   };
 
   const handleOpenCreate = () => {
@@ -129,7 +149,7 @@ export function RoleListPage() {
     roleForm.resetFields();
     roleForm.setFieldsValue({
       permissionIds: [],
-      scope: sysadmin ? "tenant" : "tenant",
+      scope: "tenant",
       tenantId: currentUser?.tenantId,
     });
     setDrawerOpen(true);
@@ -189,7 +209,7 @@ export function RoleListPage() {
       }
 
       handleCloseDrawer();
-      await loadRoles(keyword);
+      await loadRoles();
     } catch (error) {
       if (typeof error === "object" && error !== null && "errorFields" in error) {
         return;
@@ -207,7 +227,8 @@ export function RoleListPage() {
       const response = await rolesDelete({ id: target.id });
       unwrapResponse(response, "删除角色失败");
       message.success("角色删除成功");
-      await loadRoles(keyword);
+      const nextPage = getPageAfterDelete(pagination.total - 1, pagination.page, pagination.pageSize);
+      await loadRoles({ page: nextPage });
     } catch (error) {
       message.error(getErrorMessage(error, "删除角色失败"));
       setLoading(false);
@@ -328,9 +349,16 @@ export function RoleListPage() {
           className={styles.table}
           scroll={{ x: 1260 }}
           pagination={{
-            pageSize: 10,
-            showSizeChanger: false,
+            current: pagination.page,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: true,
+            pageSizeOptions: PAGE_SIZE_OPTIONS.map(String),
             showTotal: (total) => `共 ${total} 条`,
+            onChange: (page, pageSize) => {
+              handleTableChange(page, pageSize);
+              void loadRoles({ page, pageSize });
+            },
           }}
           locale={{
             emptyText: (

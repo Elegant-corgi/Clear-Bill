@@ -38,6 +38,7 @@ type UpdateRolePermissionsReq struct {
 }
 
 type ListRoleReq struct {
+	PageReq
 	Keyword  string `form:"keyword"`
 	Scope    string `form:"scope"`
 	TenantID *uint  `form:"tenantId"`

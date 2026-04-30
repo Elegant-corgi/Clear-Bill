@@ -1,4 +1,76 @@
 declare namespace API {
+  interface PageParams {
+    page?: number;
+    pageSize?: number;
+  }
+
+  interface PageResult<T = any> {
+    list: T[];
+    page: number;
+    pageSize: number;
+    total: number;
+  }
+
+  interface ResponseResult<T = any> {
+    data?: T;
+    error?: string;
+    errorMessage?: string;
+    success?: boolean;
+  }
+
+  interface User {
+    createdAt: string;
+    displayName: string;
+    id: number;
+    role: string;
+    status: string;
+    tenantId?: number;
+    updatedAt: string;
+    username: string;
+  }
+
+  interface Tenant {
+    adminDisplayName: string;
+    adminUsername: string;
+    code: string;
+    contactName: string;
+    contactPhone: string;
+    createdAt: string;
+    id: number;
+    name: string;
+    remark: string;
+    status: string;
+    updatedAt: string;
+  }
+
+  interface Role {
+    builtin: boolean;
+    code: string;
+    createdAt: string;
+    id: number;
+    name: string;
+    permissionIds: string[];
+    scope: string;
+    tenantId?: number;
+    updatedAt: string;
+  }
+
+  interface Permission {
+    id: string;
+    method: string;
+    path: string;
+    tag: string;
+  }
+
+  interface LoginReq {
+    password: string;
+    username: string;
+  }
+
+  interface LoginResp {
+    user: User;
+  }
+
   interface ChangeOwnPasswordReq {
     newPassword: string;
     oldPassword: string;
@@ -46,55 +118,8 @@ declare namespace API {
     user: User;
   }
 
-  interface LoginReq {
-    password: string;
-    username: string;
-  }
-
-  interface LoginResp {
-    user: User;
-  }
-
-  interface Permission {
-    id: string;
-    method: string;
-    path: string;
-    tag: string;
-  }
-
   interface ResetPasswordReq {
     newPassword: string;
-  }
-
-  interface ResponseResult<T = any> {
-    data?: T;
-    error?: string;
-    errorMessage?: string;
-    success?: boolean;
-  }
-
-  interface Role {
-    builtin: boolean;
-    code: string;
-    createdAt: string;
-    id: number;
-    name: string;
-    permissionIds: string[];
-    scope: string;
-    tenantId?: number;
-    updatedAt: string;
-  }
-
-  interface Tenant {
-    code: string;
-    contactName: string;
-    contactPhone: string;
-    createdAt: string;
-    id: number;
-    name: string;
-    remark: string;
-    status: string;
-    updatedAt: string;
   }
 
   interface UpdateRolePermissionsReq {
@@ -121,17 +146,6 @@ declare namespace API {
     tenantId?: number;
   }
 
-  interface User {
-    createdAt: string;
-    displayName: string;
-    id: number;
-    role: string;
-    status: string;
-    tenantId?: number;
-    updatedAt: string;
-    username: string;
-  }
-
   interface rolesDeleteParams {
     id: number;
   }
@@ -140,7 +154,7 @@ declare namespace API {
     id: number;
   }
 
-  interface rolesListParams {
+  interface rolesListParams extends PageParams {
     keyword?: string;
     scope?: string;
     tenantId?: number;
@@ -162,7 +176,7 @@ declare namespace API {
     id: number;
   }
 
-  interface tenantsListParams {
+  interface tenantsListParams extends PageParams {
     keyword?: string;
   }
 
@@ -178,7 +192,7 @@ declare namespace API {
     id: number;
   }
 
-  interface usersListParams {
+  interface usersListParams extends PageParams {
     keyword?: string;
     tenantId?: number;
   }

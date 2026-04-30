@@ -1,6 +1,6 @@
 import { ApiRequestError } from "@/services/request";
 
-export function unwrapResponse<T>(response: API.ResponseResult<T>, fallbackMessage: string) {
+export function unwrapResponse<T = any>(response: API.ResponseResult<any>, fallbackMessage: string) {
   if (!response.success) {
     throw new ApiRequestError(response.error || fallbackMessage, 200, response.errorMessage || response.error || fallbackMessage);
   }

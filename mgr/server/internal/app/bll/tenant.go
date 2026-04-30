@@ -75,8 +75,10 @@ func (s *TenantService) CreateTenant(ctx context.Context, req *vo.CreateTenantRe
 	}, nil
 }
 
-func (s *TenantService) ListTenants(ctx context.Context, req *vo.ListTenantReq) ([]vo.Tenant, error) {
-	tenants, err := s.TenantDAL.List(ctx, req.Keyword)
+func (s *TenantService) ListTenants(ctx context.Context, req *vo.ListTenantReq) (*vo.PageResult[vo.Tenant], error) {
+	pageReq := req.PageReq.Normalize()
+
+	tenants, query, total, err := s.TenantDAL.List(ctx, req.Keyword, pageReq.Page, pageReq.PageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +99,12 @@ func (s *TenantService) ListTenants(ctx context.Context, req *vo.ListTenantReq) 
 		result = append(result, *toTenantVO(&tenants[i], adminInfo.Username, adminInfo.DisplayName))
 	}
 
-	return result, nil
+	return &vo.PageResult[vo.Tenant]{
+		List:     result,
+		Total:    total,
+		Page:     query.Page,
+		PageSize: query.PageSize,
+	}, nil
 }
 
 func (s *TenantService) GetTenant(ctx context.Context, id uint) (*vo.Tenant, error) {

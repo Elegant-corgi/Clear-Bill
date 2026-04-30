@@ -61,6 +61,7 @@ type UpdateUserReq struct {
 }
 
 type ListUserReq struct {
+	PageReq
 	Keyword  string `form:"keyword"`
 	TenantID *uint  `form:"tenantId"`
 }

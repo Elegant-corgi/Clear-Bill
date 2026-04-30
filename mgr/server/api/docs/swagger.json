@@ -548,7 +548,7 @@
                     }
                 ],
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "执行成功",
                         "schema": {
                             "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
@@ -744,7 +744,7 @@
                     }
                 ],
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "执行成功",
                         "schema": {
                             "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
@@ -1060,6 +1060,9 @@
             "properties": {
                 "data": {},
                 "error": {
+                    "type": "string"
+                },
+                "errorMessage": {
                     "type": "string"
                 },
                 "success": {

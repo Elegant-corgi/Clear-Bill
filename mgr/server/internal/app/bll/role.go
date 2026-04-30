@@ -92,13 +92,28 @@ func (s *RoleService) IsSystemScoped(ctx context.Context, actor *dbmodel.User) (
 	return role.Scope == dbmodel.RoleScopeSystem, nil
 }
 
-func (s *RoleService) ListRoles(ctx context.Context, actor *dbmodel.User, req *vo.ListRoleReq) ([]vo.Role, error) {
+func (s *RoleService) ListRoles(ctx context.Context, actor *dbmodel.User, req *vo.ListRoleReq) (*vo.PageResult[vo.Role], error) {
 	actorRole, err := s.GetActorRole(ctx, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	roles, err := s.RoleDAL.List(ctx, req.Keyword)
+	pageReq := req.PageReq.Normalize()
+	roleScope := strings.TrimSpace(req.Scope)
+	tenantID := req.TenantID
+	switch actorRole.Scope {
+	case dbmodel.RoleScopeSystem:
+	case dbmodel.RoleScopeTenant:
+		if actor.TenantID == nil {
+			return nil, errors.New("permission denied")
+		}
+		roleScope = dbmodel.RoleScopeTenant
+		tenantID = actor.TenantID
+	default:
+		return nil, errors.New("permission denied")
+	}
+
+	roles, query, total, err := s.RoleDAL.List(ctx, req.Keyword, roleScope, tenantID, pageReq.Page, pageReq.PageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +125,16 @@ func (s *RoleService) ListRoles(ctx context.Context, actor *dbmodel.User, req *v
 		}
 		visibleRoles = append(visibleRoles, role)
 	}
-	return s.toRoleVOs(ctx, visibleRoles)
+	items, err := s.toRoleVOs(ctx, visibleRoles)
+	if err != nil {
+		return nil, err
+	}
+	return &vo.PageResult[vo.Role]{
+		List:     items,
+		Total:    total,
+		Page:     query.Page,
+		PageSize: query.PageSize,
+	}, nil
 }
 
 func (s *RoleService) GetRole(ctx context.Context, actor *dbmodel.User, id uint) (*vo.Role, error) {

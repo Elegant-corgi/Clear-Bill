@@ -561,7 +561,7 @@
                     "required": true
                 },
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "执行成功",
                         "content": {
                             "application/json": {
@@ -788,7 +788,7 @@
                     "required": true
                 },
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "执行成功",
                         "content": {
                             "application/json": {
@@ -1124,6 +1124,9 @@
                 "properties": {
                     "data": {},
                     "error": {
+                        "type": "string"
+                    },
+                    "errorMessage": {
                         "type": "string"
                     },
                     "success": {
