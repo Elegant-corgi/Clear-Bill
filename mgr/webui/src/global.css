@@ -145,6 +145,13 @@ textarea.ant-input[disabled],
   background: #f9fcff !important;
 }
 
+.ant-drawer-content,
+.ant-drawer-header,
+.ant-drawer-body,
+.ant-drawer-footer {
+  background: #ffffff !important;
+}
+
 .ui-action-link {
   height: 28px;
   padding: 0 8px !important;
