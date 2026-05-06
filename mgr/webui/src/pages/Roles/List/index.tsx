@@ -267,7 +267,7 @@ export function RoleListPage() {
       dataIndex: "builtin",
       key: "builtin",
       width: 120,
-      render: (value: boolean) => <Tag color={value ? "default" : "processing"}>{value ? "内置" : "自定义"}</Tag>,
+      render: (value: boolean) => <Tag color={value ? "blue" : "purple"}>{value ? "内置" : "自定义"}</Tag>,
     },
     {
       title: "权限数",
