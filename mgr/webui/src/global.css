@@ -133,23 +133,16 @@ textarea.ant-input[disabled],
 .ant-table-wrapper .ant-table,
 .ant-table-wrapper .ant-table-container,
 .ant-table-wrapper .ant-table-content,
-.ant-table-wrapper .ant-table-tbody > tr > td {
+.ant-table-wrapper .ant-table-tbody>tr>td {
   background: #ffffff !important;
 }
 
-.ant-table-wrapper .ant-table-tbody > tr:hover > td {
+.ant-table-wrapper .ant-table-tbody>tr:hover>td {
   background: #f9fcff !important;
 }
 
 .ant-table-wrapper .ant-table-cell-row-hover {
   background: #f9fcff !important;
-}
-
-.ant-drawer-content,
-.ant-drawer-header,
-.ant-drawer-body,
-.ant-drawer-footer {
-  background: #ffffff !important;
 }
 
 .ui-action-link {
@@ -630,7 +623,7 @@ textarea.ant-input[disabled],
   cursor: pointer;
 }
 
-.dashboard-tabs button + button {
+.dashboard-tabs button+button {
   border-left: 1px solid #dce6ef;
 }
 
