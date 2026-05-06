@@ -28,6 +28,7 @@ func InitDBClient(cfg config.Config) (*gorm.DB, error) {
 		&dbmodel.User{},
 		&dbmodel.UserSession{},
 		&dbmodel.UserAPIToken{},
+		&dbmodel.UserCredential{},
 	); err != nil {
 		return nil, err
 	}

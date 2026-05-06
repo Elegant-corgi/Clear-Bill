@@ -16,6 +16,7 @@ type Router struct {
 	AuthService   *bll.AuthService
 	RoleService   *bll.RoleService
 	AuthAction    *action.AuthAction
+	CredentialAction *action.CredentialAction
 	Config        config.Config
 	SystemAction  *action.SystemAction
 	BillingAction *action.BillingAction
@@ -31,6 +32,7 @@ func New(
 	authService *bll.AuthService,
 	roleService *bll.RoleService,
 	authAction *action.AuthAction,
+	credentialAction *action.CredentialAction,
 	systemAction *action.SystemAction,
 	billingAction *action.BillingAction,
 	tenantAction *action.TenantAction,
@@ -41,6 +43,7 @@ func New(
 		AuthService:   authService,
 		RoleService:   roleService,
 		AuthAction:    authAction,
+		CredentialAction: credentialAction,
 		Config:        cfg,
 		SystemAction:  systemAction,
 		BillingAction: billingAction,

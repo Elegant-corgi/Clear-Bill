@@ -2,12 +2,16 @@ package router
 
 import (
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"clearbill/mgr/server/api/vo"
 	"clearbill/mgr/server/internal/app/action"
@@ -26,9 +30,11 @@ func newTestRouter() *Router {
 	userDAL := dal.NewUserDAL(nil)
 	sessionDAL := dal.NewSessionDAL(nil)
 	apiTokenDAL := dal.NewAPITokenDAL(nil)
+	credentialDAL := dal.NewCredentialDAL(nil)
 	permissionCatalog := bll.NewPermissionCatalog()
 
-	authService := bll.NewAuthService(userDAL, sessionDAL, apiTokenDAL)
+	authService := bll.NewAuthService(userDAL, sessionDAL, apiTokenDAL, credentialDAL)
+	credentialService := bll.NewCredentialService(credentialDAL)
 	systemService := bll.NewSystemService(systemDAL)
 	billingService := bll.NewBillingService(billingDAL)
 	tenantService := bll.NewTenantService(tenantDAL, userDAL)
@@ -36,6 +42,7 @@ func newTestRouter() *Router {
 	userService := bll.NewUserService(userDAL, tenantDAL, roleService)
 
 	authAction := action.NewAuthAction(authService)
+	credentialAction := action.NewCredentialAction(credentialService)
 	systemAction := action.NewSystemAction(systemService)
 	billingAction := action.NewBillingAction(billingService)
 	tenantAction := action.NewTenantAction(tenantService, roleService)
@@ -47,6 +54,7 @@ func newTestRouter() *Router {
 		authService,
 		roleService,
 		authAction,
+		credentialAction,
 		systemAction,
 		billingAction,
 		tenantAction,
@@ -239,6 +247,207 @@ func TestAuthTenantAndUserFlow(t *testing.T) {
 	}
 }
 
+func TestCredentialLifecycleFlow(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler := gin.New()
+	newTestRouter().Register(handler)
+
+	sysadminSession := loginSession(t, handler, "sysadmin", "stor123;")
+
+	createTokenReq := authorizedJSONRequest(
+		http.MethodPost,
+		"/api/v1/credentials",
+		sysadminSession,
+		`{"type":"token","name":"integration-token"}`,
+	)
+	createTokenResp := httptest.NewRecorder()
+	handler.ServeHTTP(createTokenResp, createTokenReq)
+	if createTokenResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", createTokenResp.Code, createTokenResp.Body.String())
+	}
+
+	var tokenPayload struct {
+		Success bool         `json:"success"`
+		Data    vo.Credential `json:"data"`
+	}
+	if err := json.Unmarshal(createTokenResp.Body.Bytes(), &tokenPayload); err != nil {
+		t.Fatalf("failed to parse token credential response: %v", err)
+	}
+	if tokenPayload.Data.Token == "" || tokenPayload.Data.Type != "token" {
+		t.Fatalf("expected token credential secrets")
+	}
+
+	createAKSKReq := authorizedJSONRequest(
+		http.MethodPost,
+		"/api/v1/credentials",
+		sysadminSession,
+		`{"type":"aksk","name":"integration-aksk"}`,
+	)
+	createAKSKResp := httptest.NewRecorder()
+	handler.ServeHTTP(createAKSKResp, createAKSKReq)
+	if createAKSKResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", createAKSKResp.Code, createAKSKResp.Body.String())
+	}
+	if !strings.Contains(createAKSKResp.Body.String(), "accessKey") {
+		t.Fatalf("expected aksk credential response")
+	}
+
+	listCredentialsReq := authorizedJSONRequest(http.MethodGet, "/api/v1/credentials?type=token", sysadminSession, "")
+	listCredentialsResp := httptest.NewRecorder()
+	handler.ServeHTTP(listCredentialsResp, listCredentialsReq)
+	if listCredentialsResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", listCredentialsResp.Code, listCredentialsResp.Body.String())
+	}
+
+	var listPayload struct {
+		Success bool                 `json:"success"`
+		Data    vo.PageResult[vo.Credential] `json:"data"`
+	}
+	if err := json.Unmarshal(listCredentialsResp.Body.Bytes(), &listPayload); err != nil {
+		t.Fatalf("failed to parse credential list response: %v", err)
+	}
+	if len(listPayload.Data.List) != 1 {
+		t.Fatalf("expected one token credential, got %d", len(listPayload.Data.List))
+	}
+	if listPayload.Data.List[0].Token != "" {
+		t.Fatalf("expected token secret to be hidden in list response")
+	}
+
+	rotateReq := authorizedJSONRequest(
+		http.MethodPost,
+		"/api/v1/credentials/"+toString(tokenPayload.Data.ID)+"/rotate",
+		sysadminSession,
+		`{"name":"integration-token-2"}`,
+	)
+	rotateResp := httptest.NewRecorder()
+	handler.ServeHTTP(rotateResp, rotateReq)
+	if rotateResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rotateResp.Code, rotateResp.Body.String())
+	}
+
+	var rotatePayload struct {
+		Success bool         `json:"success"`
+		Data    vo.Credential `json:"data"`
+	}
+	if err := json.Unmarshal(rotateResp.Body.Bytes(), &rotatePayload); err != nil {
+		t.Fatalf("failed to parse rotate response: %v", err)
+	}
+	if rotatePayload.Data.Token == tokenPayload.Data.Token {
+		t.Fatalf("expected rotated token value")
+	}
+
+	deleteReq := authorizedJSONRequest(
+		http.MethodDelete,
+		"/api/v1/credentials/"+toString(tokenPayload.Data.ID),
+		sysadminSession,
+		"",
+	)
+	deleteResp := httptest.NewRecorder()
+	handler.ServeHTTP(deleteResp, deleteReq)
+	if deleteResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", deleteResp.Code, deleteResp.Body.String())
+	}
+
+	getAfterDeleteReq := authorizedJSONRequest(http.MethodGet, "/api/v1/credentials/"+toString(tokenPayload.Data.ID), sysadminSession, "")
+	getAfterDeleteResp := httptest.NewRecorder()
+	handler.ServeHTTP(getAfterDeleteResp, getAfterDeleteReq)
+	if getAfterDeleteResp.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 after delete, got %d body=%s", getAfterDeleteResp.Code, getAfterDeleteResp.Body.String())
+	}
+
+	getReq := authorizedJSONRequest(http.MethodGet, "/api/v1/credentials/"+toString(rotatePayload.Data.ID), sysadminSession, "")
+	getResp := httptest.NewRecorder()
+	handler.ServeHTTP(getResp, getReq)
+	if getResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", getResp.Code, getResp.Body.String())
+	}
+	if strings.Contains(getResp.Body.String(), `\"token\":\"`) {
+		t.Fatalf("expected credential detail to hide secret")
+	}
+}
+
+func TestCredentialExternalAuth(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler := gin.New()
+	newTestRouter().Register(handler)
+
+	sysadminSession := loginSession(t, handler, "sysadmin", "stor123;")
+
+	createTokenReq := authorizedJSONRequest(
+		http.MethodPost,
+		"/api/v1/credentials",
+		sysadminSession,
+		`{"type":"token","name":"api-token"}`,
+	)
+	createTokenResp := httptest.NewRecorder()
+	handler.ServeHTTP(createTokenResp, createTokenReq)
+	if createTokenResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", createTokenResp.Code, createTokenResp.Body.String())
+	}
+
+	var tokenPayload struct {
+		Success bool         `json:"success"`
+		Data    vo.Credential `json:"data"`
+	}
+	if err := json.Unmarshal(createTokenResp.Body.Bytes(), &tokenPayload); err != nil {
+		t.Fatalf("failed to parse token credential response: %v", err)
+	}
+
+	tokenReq := httptest.NewRequest(http.MethodGet, "/api/v1/bills", nil)
+	tokenReq.Header.Set("X-API-Token", tokenPayload.Data.Token)
+	tokenResp := httptest.NewRecorder()
+	handler.ServeHTTP(tokenResp, tokenReq)
+	if tokenResp.Code != http.StatusOK {
+		t.Fatalf("expected 200 with token auth, got %d body=%s", tokenResp.Code, tokenResp.Body.String())
+	}
+
+	createAKSKReq := authorizedJSONRequest(
+		http.MethodPost,
+		"/api/v1/credentials",
+		sysadminSession,
+		`{"type":"aksk","name":"api-aksk"}`,
+	)
+	createAKSKResp := httptest.NewRecorder()
+	handler.ServeHTTP(createAKSKResp, createAKSKReq)
+	if createAKSKResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", createAKSKResp.Code, createAKSKResp.Body.String())
+	}
+
+	var akskPayload struct {
+		Success bool         `json:"success"`
+		Data    vo.Credential `json:"data"`
+	}
+	if err := json.Unmarshal(createAKSKResp.Body.Bytes(), &akskPayload); err != nil {
+		t.Fatalf("failed to parse aksk credential response: %v", err)
+	}
+
+	directReq := httptest.NewRequest(http.MethodGet, "/api/v1/bills", nil)
+	directReq.Header.Set("X-Access-Key", akskPayload.Data.AccessKey)
+	directReq.Header.Set("X-Secret-Key", akskPayload.Data.SecretKey)
+	directResp := httptest.NewRecorder()
+	handler.ServeHTTP(directResp, directReq)
+	if directResp.Code != http.StatusOK {
+		t.Fatalf("expected 200 with direct aksk auth, got %d body=%s", directResp.Code, directResp.Body.String())
+	}
+
+	signatureReq := httptest.NewRequest(http.MethodGet, "/api/v1/bills?foo=bar", nil)
+	signatureReq.Header.Set("X-Access-Key", akskPayload.Data.AccessKey)
+	signatureReq.Header.Set("X-Timestamp", strconv.FormatInt(time.Now().Unix(), 10))
+	signatureReq.Header.Set("X-Signature", signCredentialForTest(
+		akskPayload.Data.SecretKey,
+		signatureReq.Header.Get("X-Timestamp"),
+		signatureReq.Method,
+		signatureReq.URL.Path,
+		signatureReq.URL.RawQuery,
+		nil,
+	))
+	signatureResp := httptest.NewRecorder()
+	handler.ServeHTTP(signatureResp, signatureReq)
+	if signatureResp.Code != http.StatusOK {
+		t.Fatalf("expected 200 with signature auth, got %d body=%s", signatureResp.Code, signatureResp.Body.String())
+	}
+}
+
 func TestRBACRolePermissionFlow(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	handler := gin.New()
@@ -337,4 +546,16 @@ func TestRBACRolePermissionFlow(t *testing.T) {
 
 func toString(id uint) string {
 	return strconv.FormatUint(uint64(id), 10)
+}
+
+func signCredentialForTest(secretKey, timestamp, method, requestPath, rawQuery string, body []byte) string {
+	sum := sha256.Sum256(body)
+	payload := strings.ToUpper(strings.TrimSpace(method)) + "\n" +
+		strings.TrimSpace(requestPath) + "\n" +
+		strings.TrimSpace(rawQuery) + "\n" +
+		timestamp + "\n" +
+		hex.EncodeToString(sum[:])
+	mac := hmac.New(sha256.New, []byte(secretKey))
+	_, _ = mac.Write([]byte(payload))
+	return hex.EncodeToString(mac.Sum(nil))
 }

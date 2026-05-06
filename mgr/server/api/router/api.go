@@ -23,6 +23,7 @@ func (r *Router) RegisterAPI(app *gin.Engine) {
 
 	r.registerSystemRoutes(v1)
 	r.registerAuthRoutes(v1)
+	r.registerCredentialRoutes(v1)
 	r.registerBillingRoutes(v1)
 	r.registerTenantRoutes(v1)
 	r.registerRoleRoutes(v1)
@@ -36,7 +37,7 @@ func (r *Router) registerSystemRoutes(v1 *gin.RouterGroup) {
 
 func (r *Router) registerBillingRoutes(v1 *gin.RouterGroup) {
 	billing := v1.Group("")
-	billing.Use(middleware.AuthMiddleware(r.AuthService), middleware.RBACMiddleware(r.RoleService))
+	billing.Use(middleware.ExternalAuthMiddleware(r.AuthService), middleware.RBACMiddleware(r.RoleService))
 	billing.GET("/dashboard/summary", r.BillingAction.DashboardSummary)
 	billing.GET("/bills", r.BillingAction.ListBills)
 	billing.GET("/customers", r.BillingAction.ListCustomers)
@@ -55,9 +56,19 @@ func (r *Router) registerAuthRoutes(v1 *gin.RouterGroup) {
 	protected.POST("/tokens", r.AuthAction.CreateAPIToken)
 }
 
+func (r *Router) registerCredentialRoutes(v1 *gin.RouterGroup) {
+	credentials := v1.Group("/credentials")
+	credentials.Use(middleware.AuthMiddleware(r.AuthService), middleware.RBACMiddleware(r.RoleService))
+	credentials.POST("", r.CredentialAction.CreateCredential)
+	credentials.GET("", r.CredentialAction.ListCredentials)
+	credentials.GET("/:id", r.CredentialAction.GetCredential)
+	credentials.POST("/:id/rotate", r.CredentialAction.RotateCredential)
+	credentials.DELETE("/:id", r.CredentialAction.DeleteCredential)
+}
+
 func (r *Router) registerTenantRoutes(v1 *gin.RouterGroup) {
 	tenants := v1.Group("/tenants")
-	tenants.Use(middleware.AuthMiddleware(r.AuthService), middleware.RBACMiddleware(r.RoleService))
+	tenants.Use(middleware.ExternalAuthMiddleware(r.AuthService), middleware.RBACMiddleware(r.RoleService))
 	tenants.POST("", r.TenantAction.CreateTenant)
 	tenants.GET("", r.TenantAction.ListTenants)
 	tenants.GET("/:id", r.TenantAction.GetTenant)
@@ -67,11 +78,11 @@ func (r *Router) registerTenantRoutes(v1 *gin.RouterGroup) {
 
 func (r *Router) registerRoleRoutes(v1 *gin.RouterGroup) {
 	permissions := v1.Group("/permissions")
-	permissions.Use(middleware.AuthMiddleware(r.AuthService), middleware.RBACMiddleware(r.RoleService))
+	permissions.Use(middleware.ExternalAuthMiddleware(r.AuthService), middleware.RBACMiddleware(r.RoleService))
 	permissions.GET("", r.RoleAction.ListPermissions)
 
 	roles := v1.Group("/roles")
-	roles.Use(middleware.AuthMiddleware(r.AuthService), middleware.RBACMiddleware(r.RoleService))
+	roles.Use(middleware.ExternalAuthMiddleware(r.AuthService), middleware.RBACMiddleware(r.RoleService))
 	roles.POST("", r.RoleAction.CreateRole)
 	roles.GET("", r.RoleAction.ListRoles)
 	roles.GET("/:id", r.RoleAction.GetRole)
@@ -82,7 +93,7 @@ func (r *Router) registerRoleRoutes(v1 *gin.RouterGroup) {
 
 func (r *Router) registerUserRoutes(v1 *gin.RouterGroup) {
 	users := v1.Group("/users")
-	users.Use(middleware.AuthMiddleware(r.AuthService), middleware.RBACMiddleware(r.RoleService))
+	users.Use(middleware.ExternalAuthMiddleware(r.AuthService), middleware.RBACMiddleware(r.RoleService))
 	users.POST("", r.UserAction.CreateUser)
 	users.GET("", r.UserAction.ListUsers)
 	users.GET("/:id", r.UserAction.GetUser)
