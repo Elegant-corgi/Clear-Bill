@@ -11,4 +11,5 @@ var DalSet = wire.NewSet(
 	NewRolePermissionDAL,
 	NewSessionDAL,
 	NewAPITokenDAL,
+	NewCredentialDAL,
 )

@@ -25,13 +25,16 @@ func BuildInjector(cfg config.Config) (*Injector, error) {
 	userDAL := dal.NewUserDAL(gormDB)
 	sessionDAL := dal.NewSessionDAL(gormDB)
 	apiTokenDAL := dal.NewAPITokenDAL(gormDB)
-	authService := bll.NewAuthService(userDAL, sessionDAL, apiTokenDAL)
+	credentialDAL := dal.NewCredentialDAL(gormDB)
+	authService := bll.NewAuthService(userDAL, sessionDAL, apiTokenDAL, credentialDAL)
 	roleDAL := dal.NewRoleDAL(gormDB)
 	rolePermissionDAL := dal.NewRolePermissionDAL(gormDB)
 	tenantDAL := dal.NewTenantDAL(gormDB)
 	permissionCatalog := bll.NewPermissionCatalog()
 	roleService := bll.NewRoleService(roleDAL, rolePermissionDAL, userDAL, tenantDAL, permissionCatalog)
 	authAction := action.NewAuthAction(authService)
+	credentialService := bll.NewCredentialService(credentialDAL)
+	credentialAction := action.NewCredentialAction(credentialService)
 	systemDAL := dal.NewSystemDAL()
 	systemService := bll.NewSystemService(systemDAL)
 	systemAction := action.NewSystemAction(systemService)
@@ -43,7 +46,7 @@ func BuildInjector(cfg config.Config) (*Injector, error) {
 	roleAction := action.NewRoleAction(roleService)
 	userService := bll.NewUserService(userDAL, tenantDAL, roleService)
 	userAction := action.NewUserAction(userService)
-	router := InitRouter(cfg, authService, roleService, authAction, systemAction, billingAction, tenantAction, roleAction, userAction, engine)
+	router := InitRouter(cfg, authService, roleService, authAction, credentialAction, systemAction, billingAction, tenantAction, roleAction, userAction, engine)
 	injector := &Injector{
 		Config:            cfg,
 		DBClient:          gormDB,
@@ -51,6 +54,7 @@ func BuildInjector(cfg config.Config) (*Injector, error) {
 		Router:            router,
 		APITokenDAL:       apiTokenDAL,
 		AuthAction:        authAction,
+		CredentialAction:  credentialAction,
 		SystemAction:      systemAction,
 		BillingAction:     billingAction,
 		TenantAction:      tenantAction,
@@ -69,6 +73,8 @@ func BuildInjector(cfg config.Config) (*Injector, error) {
 		RolePermissionDAL: rolePermissionDAL,
 		UserDAL:           userDAL,
 		SessionDAL:        sessionDAL,
+		CredentialDAL:     credentialDAL,
+		CredentialService: credentialService,
 	}
 	return injector, nil
 }

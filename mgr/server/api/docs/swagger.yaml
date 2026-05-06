@@ -21,6 +21,18 @@ definitions:
     required:
     - name
     type: object
+  clearbill_mgr_server_api_vo.CreateCredentialReq:
+    properties:
+      name:
+        maxLength: 128
+        type: string
+      type:
+        maxLength: 16
+        type: string
+    required:
+    - name
+    - type
+    type: object
   clearbill_mgr_server_api_vo.CreateRoleReq:
     properties:
       code:
@@ -123,6 +135,12 @@ definitions:
         type: string
       success:
         type: boolean
+    type: object
+  clearbill_mgr_server_api_vo.RotateCredentialReq:
+    properties:
+      name:
+        maxLength: 128
+        type: string
     type: object
   clearbill_mgr_server_api_vo.UpdateRolePermissionsReq:
     properties:
@@ -297,6 +315,118 @@ paths:
       summary: 查询账单列表
       tags:
       - billing
+  /api/v1/credentials:
+    get:
+      description: 查询当前用户可见的凭证，系统管理员可查看全部
+      operationId: credentials-list
+      parameters:
+      - description: 凭证类型
+        in: query
+        name: type
+        type: string
+      - description: 凭证状态
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 查询凭证列表
+      tags:
+      - credential
+    post:
+      consumes:
+      - application/json
+      description: 为当前登录用户创建 AK/SK 或 token 凭证
+      operationId: credentials-create
+      parameters:
+      - description: body参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/clearbill_mgr_server_api_vo.CreateCredentialReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 创建凭证
+      tags:
+      - credential
+  /api/v1/credentials/{id}:
+    delete:
+      description: 删除指定凭证
+      operationId: credentials-delete
+      parameters:
+      - description: 凭证ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 删除凭证
+      tags:
+      - credential
+    get:
+      description: 查询指定凭证的元数据，不返回密钥明文
+      operationId: credentials-get
+      parameters:
+      - description: 凭证ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 查询凭证详情
+      tags:
+      - credential
+  /api/v1/credentials/{id}/rotate:
+    post:
+      consumes:
+      - application/json
+      description: 将旧凭证置为已轮转并生成一条新的凭证记录
+      operationId: credentials-rotate
+      parameters:
+      - description: 凭证ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: body参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/clearbill_mgr_server_api_vo.RotateCredentialReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 执行成功
+          schema:
+            $ref: '#/definitions/clearbill_mgr_server_api_vo.ResponseResult'
+      summary: 轮转凭证
+      tags:
+      - credential
   /api/v1/customers:
     get:
       description: 返回客户列表数据

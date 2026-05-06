@@ -183,6 +183,174 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/credentials": {
+            "get": {
+                "description": "查询当前用户可见的凭证，系统管理员可查看全部",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "credential"
+                ],
+                "summary": "查询凭证列表",
+                "operationId": "credentials-list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "凭证类型",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "凭证状态",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "为当前登录用户创建 AK/SK 或 token 凭证",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "credential"
+                ],
+                "summary": "创建凭证",
+                "operationId": "credentials-create",
+                "parameters": [
+                    {
+                        "description": "body参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.CreateCredentialReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/credentials/{id}": {
+            "get": {
+                "description": "查询指定凭证的元数据，不返回密钥明文",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "credential"
+                ],
+                "summary": "查询凭证详情",
+                "operationId": "credentials-get",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "凭证ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "删除指定凭证",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "credential"
+                ],
+                "summary": "删除凭证",
+                "operationId": "credentials-delete",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "凭证ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/credentials/{id}/rotate": {
+            "post": {
+                "description": "将旧凭证置为已轮转并生成一条新的凭证记录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "credential"
+                ],
+                "summary": "轮转凭证",
+                "operationId": "credentials-rotate",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "凭证ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.RotateCredentialReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "执行成功",
+                        "schema": {
+                            "$ref": "#/definitions/clearbill_mgr_server_api_vo.ResponseResult"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/customers": {
             "get": {
                 "description": "返回客户列表数据",
@@ -932,6 +1100,23 @@ const docTemplate = `{
                 }
             }
         },
+        "clearbill_mgr_server_api_vo.CreateCredentialReq": {
+            "type": "object",
+            "required": [
+                "name",
+                "type"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "maxLength": 128
+                },
+                "type": {
+                    "type": "string",
+                    "maxLength": 16
+                }
+            }
+        },
         "clearbill_mgr_server_api_vo.CreateRoleReq": {
             "type": "object",
             "required": [
@@ -1074,6 +1259,15 @@ const docTemplate = `{
                 },
                 "success": {
                     "type": "boolean"
+                }
+            }
+        },
+        "clearbill_mgr_server_api_vo.RotateCredentialReq": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "maxLength": 128
                 }
             }
         },
