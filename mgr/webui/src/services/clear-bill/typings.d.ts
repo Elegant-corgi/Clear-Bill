@@ -80,6 +80,34 @@ declare namespace API {
     name: string;
   }
 
+  interface Credential {
+    accessKey?: string;
+    accessKeyPreview?: string;
+    createdAt: string;
+    expiresAt?: string;
+    id: number;
+    lastUsedAt?: string;
+    name: string;
+    parentId?: number;
+    rotatedAt?: string;
+    secretKey?: string;
+    status: string;
+    token?: string;
+    tokenPreview?: string;
+    type: string;
+    updatedAt: string;
+    userId: number;
+  }
+
+  interface CreateCredentialReq {
+    name: string;
+    type: string;
+  }
+
+  interface RotateCredentialReq {
+    name?: string;
+  }
+
   interface CreateRoleReq {
     code: string;
     name: string;
@@ -202,6 +230,23 @@ declare namespace API {
   }
 
   interface usersUpdateParams {
+    id: number;
+  }
+
+  interface credentialsDeleteParams {
+    id: number;
+  }
+
+  interface credentialsGetParams {
+    id: number;
+  }
+
+  interface credentialsListParams extends PageParams {
+    status?: string;
+    type?: string;
+  }
+
+  interface credentialsRotateParams {
     id: number;
   }
 }

@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { GuestRoute, ProtectedRoute } from "@/auth/AuthGuards";
 import { AppShell } from "@/layouts/AppShell";
+import { CredentialListPage } from "@/pages/Credentials/List";
 import { LoginPage } from "@/pages/Login";
 import { NotFoundPage } from "@/pages/NotFound";
 import { OverviewPage } from "@/pages/Overview";
@@ -50,6 +51,14 @@ export const router = createBrowserRouter([
       {
         path: "tenants/roles",
         element: <RoleListPage />,
+      },
+      {
+        path: "credentials/list",
+        element: <CredentialListPage />,
+      },
+      {
+        path: "credentials/:id",
+        element: <CredentialListPage />,
       },
       {
         path: "",

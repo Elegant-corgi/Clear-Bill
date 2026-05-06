@@ -6,6 +6,7 @@ import {
   DownOutlined,
   FileDoneOutlined,
   HomeOutlined,
+  KeyOutlined,
   MenuOutlined,
   SafetyCertificateOutlined,
   TeamOutlined,
@@ -19,11 +20,13 @@ import { useAuth } from "@/auth/AuthContext";
 import defaultSettings from "@config/defaultSettings";
 import { getErrorMessage } from "@/utils/api";
 import {
+  canAccessCredentialList,
   canAccessPath,
   canAccessRoleList,
   canAccessTenantList,
   canAccessUserList,
   getCurrentTitle,
+  CREDENTIAL_LIST_PATH,
   OVERVIEW_PATH,
   ROLE_LIST_PATH,
   roleLabel,
@@ -179,6 +182,14 @@ export function AppShell() {
         icon: <SafetyCertificateOutlined />,
         key: ROLE_LIST_PATH,
         label: "角色权限",
+      });
+    }
+
+    if (canAccessCredentialList(user)) {
+      items.push({
+        icon: <KeyOutlined />,
+        key: CREDENTIAL_LIST_PATH,
+        label: "凭证管理",
       });
     }
 
