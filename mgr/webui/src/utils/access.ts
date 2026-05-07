@@ -1,9 +1,10 @@
-export const ROLE_SYSADMIN = "sysadmin";
+﻿export const ROLE_SYSADMIN = "sysadmin";
 export const ROLE_TENANT_ADMIN = "tenant_admin";
 export const ROLE_USER = "user";
 
 export const OVERVIEW_PATH = "/overview";
 export const CREDENTIAL_LIST_PATH = "/credentials/list";
+export const AUDIT_LOGS_PATH = "/audit-logs";
 export const TENANT_LIST_PATH = "/tenants/list";
 export const USER_LIST_PATH = "/tenants/users";
 export const ROLE_LIST_PATH = "/tenants/roles";
@@ -34,6 +35,10 @@ export function canAccessRoleList(user?: API.User | null) {
 
 export function canAccessCredentialList(user?: API.User | null) {
   return Boolean(user);
+}
+
+export function canAccessAuditLogs(user?: API.User | null) {
+  return isSysadmin(user);
 }
 
 export function roleLabel(role?: string) {
@@ -78,6 +83,10 @@ export function canAccessPath(user: API.User | null | undefined, pathname: strin
     return canAccessCredentialList(user);
   }
 
+  if (pathname.startsWith(AUDIT_LOGS_PATH)) {
+    return canAccessAuditLogs(user);
+  }
+
   return true;
 }
 
@@ -96,6 +105,10 @@ export function getCurrentTitle(pathname: string) {
 
   if (pathname.startsWith(CREDENTIAL_LIST_PATH)) {
     return "凭证管理";
+  }
+
+  if (pathname.startsWith(AUDIT_LOGS_PATH)) {
+    return "审计日志";
   }
 
   return "首页";

@@ -13,6 +13,7 @@ var ActionsSet = wire.NewSet(
 	NewRoleAction,
 	NewUserAction,
 	NewCredentialAction,
+	NewAuditAction,
 )
 
 func NewTenantActionProvider(

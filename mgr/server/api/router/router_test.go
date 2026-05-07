@@ -31,10 +31,12 @@ func newTestRouter() *Router {
 	sessionDAL := dal.NewSessionDAL(nil)
 	apiTokenDAL := dal.NewAPITokenDAL(nil)
 	credentialDAL := dal.NewCredentialDAL(nil)
+	auditDAL := dal.NewAuditDAL(nil)
 	permissionCatalog := bll.NewPermissionCatalog()
 
 	authService := bll.NewAuthService(userDAL, sessionDAL, apiTokenDAL, credentialDAL)
 	credentialService := bll.NewCredentialService(credentialDAL)
+	auditService := bll.NewAuditService(auditDAL)
 	systemService := bll.NewSystemService(systemDAL)
 	billingService := bll.NewBillingService(billingDAL)
 	tenantService := bll.NewTenantService(tenantDAL, userDAL)
@@ -43,6 +45,7 @@ func newTestRouter() *Router {
 
 	authAction := action.NewAuthAction(authService)
 	credentialAction := action.NewCredentialAction(credentialService)
+	auditAction := action.NewAuditAction(auditService)
 	systemAction := action.NewSystemAction(systemService)
 	billingAction := action.NewBillingAction(billingService)
 	tenantAction := action.NewTenantAction(tenantService, roleService)
@@ -55,6 +58,7 @@ func newTestRouter() *Router {
 		roleService,
 		authAction,
 		credentialAction,
+		auditAction,
 		systemAction,
 		billingAction,
 		tenantAction,
@@ -150,6 +154,49 @@ func TestBillsEndpoint(t *testing.T) {
 
 	if len(payload.Data) == 0 {
 		t.Fatalf("expected bill data")
+	}
+}
+
+func TestAuditLogsEndpoint(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler := gin.New()
+	newTestRouter().Register(handler)
+
+	sysadminSession := loginSession(t, handler, "sysadmin", "stor123;")
+
+	createTenantReq := authorizedJSONRequest(
+		http.MethodPost,
+		"/api/v1/tenants",
+		sysadminSession,
+		`{"code":"audit-tenant","name":"Audit Tenant"}`,
+	)
+	createTenantResp := httptest.NewRecorder()
+	handler.ServeHTTP(createTenantResp, createTenantReq)
+	if createTenantResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", createTenantResp.Code, createTenantResp.Body.String())
+	}
+
+	auditReq := authorizedJSONRequest(
+		http.MethodGet,
+		"/api/v1/audit-logs?user=sysadmin&operation=tenants-create",
+		sysadminSession,
+		"",
+	)
+	auditResp := httptest.NewRecorder()
+	handler.ServeHTTP(auditResp, auditReq)
+	if auditResp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", auditResp.Code, auditResp.Body.String())
+	}
+
+	var payload struct {
+		Success bool                       `json:"success"`
+		Data    vo.PageResult[vo.AuditLog] `json:"data"`
+	}
+	if err := json.Unmarshal(auditResp.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("failed to parse audit response: %v", err)
+	}
+	if len(payload.Data.List) == 0 {
+		t.Fatalf("expected audit data")
 	}
 }
 
@@ -267,7 +314,7 @@ func TestCredentialLifecycleFlow(t *testing.T) {
 	}
 
 	var tokenPayload struct {
-		Success bool         `json:"success"`
+		Success bool          `json:"success"`
 		Data    vo.Credential `json:"data"`
 	}
 	if err := json.Unmarshal(createTokenResp.Body.Bytes(), &tokenPayload); err != nil {
@@ -300,7 +347,7 @@ func TestCredentialLifecycleFlow(t *testing.T) {
 	}
 
 	var listPayload struct {
-		Success bool                 `json:"success"`
+		Success bool                         `json:"success"`
 		Data    vo.PageResult[vo.Credential] `json:"data"`
 	}
 	if err := json.Unmarshal(listCredentialsResp.Body.Bytes(), &listPayload); err != nil {
@@ -326,7 +373,7 @@ func TestCredentialLifecycleFlow(t *testing.T) {
 	}
 
 	var rotatePayload struct {
-		Success bool         `json:"success"`
+		Success bool          `json:"success"`
 		Data    vo.Credential `json:"data"`
 	}
 	if err := json.Unmarshal(rotateResp.Body.Bytes(), &rotatePayload); err != nil {
@@ -386,7 +433,7 @@ func TestCredentialExternalAuth(t *testing.T) {
 	}
 
 	var tokenPayload struct {
-		Success bool         `json:"success"`
+		Success bool          `json:"success"`
 		Data    vo.Credential `json:"data"`
 	}
 	if err := json.Unmarshal(createTokenResp.Body.Bytes(), &tokenPayload); err != nil {
@@ -414,7 +461,7 @@ func TestCredentialExternalAuth(t *testing.T) {
 	}
 
 	var akskPayload struct {
-		Success bool         `json:"success"`
+		Success bool          `json:"success"`
 		Data    vo.Credential `json:"data"`
 	}
 	if err := json.Unmarshal(createAKSKResp.Body.Bytes(), &akskPayload); err != nil {

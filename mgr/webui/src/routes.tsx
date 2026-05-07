@@ -1,7 +1,8 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+﻿import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { GuestRoute, ProtectedRoute } from "@/auth/AuthGuards";
 import { AppShell } from "@/layouts/AppShell";
+import { AuditListPage } from "@/pages/Audits/List";
 import { CredentialListPage } from "@/pages/Credentials/List";
 import { LoginPage } from "@/pages/Login";
 import { NotFoundPage } from "@/pages/NotFound";
@@ -55,6 +56,10 @@ export const router = createBrowserRouter([
       {
         path: "credentials/list",
         element: <CredentialListPage />,
+      },
+      {
+        path: "audit-logs",
+        element: <AuditListPage />,
       },
       {
         path: "credentials/:id",

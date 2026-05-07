@@ -37,6 +37,7 @@ func (a *AuthAction) Login(c *gin.Context) {
 		ginx.ResError(c, err, 400)
 		return
 	}
+	middleware.SetAuditUser(c, req.Username)
 
 	user, sessionToken, err := a.AuthService.Login(c.Request.Context(), &req)
 	if err != nil {

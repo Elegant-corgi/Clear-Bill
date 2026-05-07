@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 
 import {
+  AuditOutlined,
   DoubleLeftOutlined,
   DoubleRightOutlined,
   DownOutlined,
@@ -20,12 +21,14 @@ import { useAuth } from "@/auth/AuthContext";
 import defaultSettings from "@config/defaultSettings";
 import { getErrorMessage } from "@/utils/api";
 import {
+  canAccessAuditLogs,
   canAccessCredentialList,
   canAccessPath,
   canAccessRoleList,
   canAccessTenantList,
   canAccessUserList,
   getCurrentTitle,
+  AUDIT_LOGS_PATH,
   CREDENTIAL_LIST_PATH,
   OVERVIEW_PATH,
   ROLE_LIST_PATH,
@@ -106,7 +109,7 @@ function Sidebar({
           <section className="shell__menu-group">
             {!collapsed ? (
               <button className="shell__menu-group-title" type="button" onClick={onToggleTenantMenu}>
-                <span>租户管理</span>
+                <span>系统管理</span>
                 <DownOutlined className={tenantMenuCollapsed ? "is-folded" : ""} />
               </button>
             ) : null}
@@ -190,6 +193,14 @@ export function AppShell() {
         icon: <KeyOutlined />,
         key: CREDENTIAL_LIST_PATH,
         label: "凭证管理",
+      });
+    }
+
+    if (canAccessAuditLogs(user)) {
+      items.push({
+        icon: <AuditOutlined />,
+        key: AUDIT_LOGS_PATH,
+        label: "审计日志",
       });
     }
 

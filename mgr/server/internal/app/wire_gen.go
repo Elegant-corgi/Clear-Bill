@@ -35,6 +35,9 @@ func BuildInjector(cfg config.Config) (*Injector, error) {
 	authAction := action.NewAuthAction(authService)
 	credentialService := bll.NewCredentialService(credentialDAL)
 	credentialAction := action.NewCredentialAction(credentialService)
+	auditDAL := dal.NewAuditDAL(gormDB)
+	auditService := bll.NewAuditService(auditDAL)
+	auditAction := action.NewAuditAction(auditService)
 	systemDAL := dal.NewSystemDAL()
 	systemService := bll.NewSystemService(systemDAL)
 	systemAction := action.NewSystemAction(systemService)
@@ -46,7 +49,7 @@ func BuildInjector(cfg config.Config) (*Injector, error) {
 	roleAction := action.NewRoleAction(roleService)
 	userService := bll.NewUserService(userDAL, tenantDAL, roleService)
 	userAction := action.NewUserAction(userService)
-	router := InitRouter(cfg, authService, roleService, authAction, credentialAction, systemAction, billingAction, tenantAction, roleAction, userAction, engine)
+	router := InitRouter(cfg, authService, roleService, authAction, credentialAction, auditAction, systemAction, billingAction, tenantAction, roleAction, userAction, engine)
 	injector := &Injector{
 		Config:            cfg,
 		DBClient:          gormDB,
@@ -55,6 +58,7 @@ func BuildInjector(cfg config.Config) (*Injector, error) {
 		APITokenDAL:       apiTokenDAL,
 		AuthAction:        authAction,
 		CredentialAction:  credentialAction,
+		AuditAction:       auditAction,
 		SystemAction:      systemAction,
 		BillingAction:     billingAction,
 		TenantAction:      tenantAction,
@@ -75,6 +79,8 @@ func BuildInjector(cfg config.Config) (*Injector, error) {
 		SessionDAL:        sessionDAL,
 		CredentialDAL:     credentialDAL,
 		CredentialService: credentialService,
+		AuditDAL:          auditDAL,
+		AuditService:      auditService,
 	}
 	return injector, nil
 }
