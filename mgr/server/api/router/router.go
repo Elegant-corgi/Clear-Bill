@@ -13,16 +13,17 @@ type IRouter interface {
 }
 
 type Router struct {
-	AuthService   *bll.AuthService
-	RoleService   *bll.RoleService
-	AuthAction    *action.AuthAction
+	AuthService      *bll.AuthService
+	RoleService      *bll.RoleService
+	AuthAction       *action.AuthAction
 	CredentialAction *action.CredentialAction
-	Config        config.Config
-	SystemAction  *action.SystemAction
-	BillingAction *action.BillingAction
-	TenantAction  *action.TenantAction
-	RoleAction    *action.RoleAction
-	UserAction    *action.UserAction
+	AuditAction      *action.AuditAction
+	Config           config.Config
+	SystemAction     *action.SystemAction
+	BillingAction    *action.BillingAction
+	TenantAction     *action.TenantAction
+	RoleAction       *action.RoleAction
+	UserAction       *action.UserAction
 }
 
 var _ IRouter = (*Router)(nil)
@@ -33,6 +34,7 @@ func New(
 	roleService *bll.RoleService,
 	authAction *action.AuthAction,
 	credentialAction *action.CredentialAction,
+	auditAction *action.AuditAction,
 	systemAction *action.SystemAction,
 	billingAction *action.BillingAction,
 	tenantAction *action.TenantAction,
@@ -40,16 +42,17 @@ func New(
 	userAction *action.UserAction,
 ) *Router {
 	return &Router{
-		AuthService:   authService,
-		RoleService:   roleService,
-		AuthAction:    authAction,
+		AuthService:      authService,
+		RoleService:      roleService,
+		AuthAction:       authAction,
 		CredentialAction: credentialAction,
-		Config:        cfg,
-		SystemAction:  systemAction,
-		BillingAction: billingAction,
-		TenantAction:  tenantAction,
-		RoleAction:    roleAction,
-		UserAction:    userAction,
+		AuditAction:      auditAction,
+		Config:           cfg,
+		SystemAction:     systemAction,
+		BillingAction:    billingAction,
+		TenantAction:     tenantAction,
+		RoleAction:       roleAction,
+		UserAction:       userAction,
 	}
 }
 

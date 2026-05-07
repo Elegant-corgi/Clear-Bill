@@ -11,4 +11,5 @@ var BllSet = wire.NewSet(
 	NewRoleService,
 	NewUserService,
 	NewCredentialService,
+	NewAuditService,
 )

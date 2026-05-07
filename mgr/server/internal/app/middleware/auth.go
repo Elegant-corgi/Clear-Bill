@@ -2,7 +2,10 @@ package middleware
 
 import (
 	"errors"
+	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"clearbill/mgr/server/internal/app/bll"
 	"clearbill/mgr/server/internal/app/dal/dbmodel"
@@ -13,6 +16,7 @@ import (
 const (
 	currentUserKey   = "currentUser"
 	currentTokenKey  = "currentToken"
+	auditUserKey     = "auditUser"
 	sessionCookieKey = "clear_bill_session"
 )
 
@@ -106,4 +110,66 @@ func CurrentToken(c *gin.Context) string {
 	}
 	token, _ := value.(string)
 	return token
+}
+
+func SetAuditUser(c *gin.Context, user string) {
+	c.Set(auditUserKey, strings.TrimSpace(user))
+}
+
+func AuditMiddleware(auditService *bll.AuditService, roleService *bll.RoleService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.Request.Method == http.MethodGet {
+			c.Next()
+			return
+		}
+
+		start := time.Now().UTC()
+		c.Next()
+
+		user := auditUser(c)
+		operation := auditOperation(c, roleService)
+		resource := auditResource(c)
+		result := auditResult(c)
+		_ = auditService.Record(c.Request.Context(), user, operation, resource, result, start)
+	}
+}
+
+func auditUser(c *gin.Context) string {
+	if user := CurrentUser(c); user != nil && strings.TrimSpace(user.Username) != "" {
+		return user.Username
+	}
+	if value, ok := c.Get(auditUserKey); ok {
+		if user, _ := value.(string); strings.TrimSpace(user) != "" {
+			return user
+		}
+	}
+	return "anonymous"
+}
+
+func auditOperation(c *gin.Context, roleService *bll.RoleService) string {
+	if roleService != nil {
+		if permission, ok := roleService.ResolvePermissionByRoute(c.Request.Method, c.FullPath()); ok {
+			return permission.ID
+		}
+	}
+	fullPath := strings.TrimSpace(c.FullPath())
+	if fullPath == "" {
+		fullPath = c.Request.URL.Path
+	}
+	return strings.ToLower(strings.TrimSpace(c.Request.Method)) + ":" + fullPath
+}
+
+func auditResource(c *gin.Context) string {
+	if fullPath := strings.TrimSpace(c.FullPath()); fullPath != "" {
+		return fullPath
+	}
+	return c.Request.URL.Path
+}
+
+func auditResult(c *gin.Context) string {
+	status := c.Writer.Status()
+	if status >= http.StatusBadRequest {
+		return "failed:" + strconv.Itoa(status)
+	}
+	return "success"
 }

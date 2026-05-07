@@ -25,6 +25,7 @@ type Injector struct {
 	APITokenDAL       *dal.APITokenDAL
 	AuthAction        *action.AuthAction
 	CredentialAction  *action.CredentialAction
+	AuditAction       *action.AuditAction
 	SystemAction      *action.SystemAction
 	BillingAction     *action.BillingAction
 	TenantAction      *action.TenantAction
@@ -45,6 +46,8 @@ type Injector struct {
 	SessionDAL        *dal.SessionDAL
 	CredentialDAL     *dal.CredentialDAL
 	CredentialService *bll.CredentialService
+	AuditDAL          *dal.AuditDAL
+	AuditService      *bll.AuditService
 }
 
 func InitGinEngine(cfg config.Config) *gin.Engine {
@@ -64,6 +67,7 @@ func InitRouter(
 	roleService *bll.RoleService,
 	authAction *action.AuthAction,
 	credentialAction *action.CredentialAction,
+	auditAction *action.AuditAction,
 	systemAction *action.SystemAction,
 	billingAction *action.BillingAction,
 	tenantAction *action.TenantAction,
@@ -71,7 +75,7 @@ func InitRouter(
 	userAction *action.UserAction,
 	engine *gin.Engine,
 ) *router.Router {
-	appRouter := router.New(cfg, authService, roleService, authAction, credentialAction, systemAction, billingAction, tenantAction, roleAction, userAction)
+	appRouter := router.New(cfg, authService, roleService, authAction, credentialAction, auditAction, systemAction, billingAction, tenantAction, roleAction, userAction)
 	appRouter.Register(engine)
 	return appRouter
 }

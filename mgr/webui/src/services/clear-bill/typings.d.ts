@@ -1,4 +1,4 @@
-declare namespace API {
+﻿declare namespace API {
   interface PageParams {
     page?: number;
     pageSize?: number;
@@ -60,6 +60,15 @@ declare namespace API {
     method: string;
     path: string;
     tag: string;
+  }
+
+  interface AuditLog {
+    id: number;
+    occurredAt: string;
+    operation: string;
+    resource: string;
+    result: string;
+    user: string;
   }
 
   interface LoginReq {
@@ -248,5 +257,12 @@ declare namespace API {
 
   interface credentialsRotateParams {
     id: number;
+  }
+
+  interface auditLogsListParams extends PageParams {
+    endTime?: string;
+    operation?: string;
+    startTime?: string;
+    user?: string;
   }
 }

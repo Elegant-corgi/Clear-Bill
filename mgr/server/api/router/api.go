@@ -15,6 +15,7 @@ func (r *Router) RegisterValidator() {
 
 func (r *Router) RegisterAPI(app *gin.Engine) {
 	app.ForwardedByClientIP = true
+	app.Use(middleware.AuditMiddleware(r.AuditAction.AuditService, r.RoleService))
 
 	app.GET("/health", r.SystemAction.Health)
 
@@ -24,6 +25,7 @@ func (r *Router) RegisterAPI(app *gin.Engine) {
 	r.registerSystemRoutes(v1)
 	r.registerAuthRoutes(v1)
 	r.registerCredentialRoutes(v1)
+	r.registerAuditRoutes(v1)
 	r.registerBillingRoutes(v1)
 	r.registerTenantRoutes(v1)
 	r.registerRoleRoutes(v1)
@@ -64,6 +66,12 @@ func (r *Router) registerCredentialRoutes(v1 *gin.RouterGroup) {
 	credentials.GET("/:id", r.CredentialAction.GetCredential)
 	credentials.POST("/:id/rotate", r.CredentialAction.RotateCredential)
 	credentials.DELETE("/:id", r.CredentialAction.DeleteCredential)
+}
+
+func (r *Router) registerAuditRoutes(v1 *gin.RouterGroup) {
+	audits := v1.Group("/audit-logs")
+	audits.Use(middleware.ExternalAuthMiddleware(r.AuthService), middleware.RBACMiddleware(r.RoleService))
+	audits.GET("", r.AuditAction.ListAuditLogs)
 }
 
 func (r *Router) registerTenantRoutes(v1 *gin.RouterGroup) {
